@@ -3,7 +3,11 @@
 #include "config.h"
 #include "secrets.h"
 
+#include "DebugWindow.h"
+
 TTGOClass *ttgo;
+
+DebugWindow *debug;
 
 const char wifiSsid[] = STASSID;
 const char wifiPass[] = STAPSK;
@@ -16,30 +20,22 @@ void setup() {
     ttgo->begin();
     ttgo->openBL();
 
+    debug = new DebugWindow(ttgo, 0, 120, 240, 120);
+
     WiFi.begin(wifiSsid, wifiPass);
 }
 
 unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
     if (millis() > _nextGuiUpdate) {
-        ttgo->tft->setTextColor(random(0xFFFF));
-        ttgo->tft->drawString("T-Watch RTC",  50, 50, 4);
-
         ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
         snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
-        ttgo->tft->drawString(buf, 5, 118, 7);
+        ttgo->tft->drawString(buf, 5, 20, 7);
 
-        ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
-        if (WiFi.isConnected()) {
-            ttgo->tft->drawString(WiFi.localIP().toString(), 0, 230, 1);
-        } else {
-            ttgo->tft->drawString("No wifi :-(", 0, 230, 1);
-        }
+        snprintf(buf, sizeof(buf), "Current time: %s", ttgo->rtc->formatDateTime());
+        debug->println(buf);
 
-        if (_timeSynched) {
-            auto textWidth = ttgo->tft->textWidth("synched", 1);
-            ttgo->tft->drawString("synched", TFT_WIDTH - textWidth, 230, 1);
-        }
+        debug->draw();
 
         _nextGuiUpdate += 1000;
     }
@@ -53,8 +49,10 @@ void time_sync_loop() {
 
         configTzTime(TZ, ntp0, ntp1, ntp2);
         if (!getLocalTime(&timeinfo)) {
+            debug->println("Time not synched");
             _nextSyncCheck += 1000;
         } else {
+            debug->println("Time synched");
             ttgo->rtc->syncToRtc();
             _timeSynched = true;
         }
