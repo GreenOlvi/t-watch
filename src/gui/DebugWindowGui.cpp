@@ -13,7 +13,7 @@ void DebugWindowGui::println(const char* text) {
 }
 
 void DebugWindowGui::draw() {
-    _ttgo->tft->drawRect(_x, _y, _width, _height, TFT_GREEN);
+    // _ttgo->tft->drawRect(_x, _y, _width, _height, TFT_GREEN);
 
     _ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
 
@@ -22,7 +22,7 @@ void DebugWindowGui::draw() {
         // _ttgo->tft->drawString(_lines[i], _x + 3, _y + 4 + i * 10, 1);
         for (int i = 0; i < _cols; i++) {
             char c = _debug->getChar(i, j);
-            _ttgo->tft->drawChar(c, _x + 3 + i * 8, _y + 4 + j * 10);
+            _ttgo->tft->drawChar(c, _x + 3 + i * _charWidth, _y + 4 + j * _charHeight);
         }
     }
 

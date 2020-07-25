@@ -13,6 +13,9 @@ class DebugWindow {
         unsigned int _cols, _rows;
         unsigned int _curX, _curY;
         char *_chars;
+        unsigned int *_rowIndex;
+
+        void shiftLinesUp(void);
 };
 
 #endif
