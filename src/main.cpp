@@ -3,11 +3,11 @@
 #include "config.h"
 #include "secrets.h"
 
-#include "DebugWindow.h"
+#include "gui/DebugWindowGui.h"
 
 TTGOClass *ttgo;
 
-DebugWindow *debug;
+DebugWindowGui *debug;
 
 const char wifiSsid[] = STASSID;
 const char wifiPass[] = STAPSK;
@@ -19,8 +19,9 @@ void setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
     ttgo->openBL();
+    ttgo->bl->adjust(30);
 
-    debug = new DebugWindow(ttgo, 0, 120, 240, 120);
+    debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
 
     WiFi.begin(wifiSsid, wifiPass);
 }

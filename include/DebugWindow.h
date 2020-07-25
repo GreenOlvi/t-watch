@@ -1,25 +1,18 @@
 #ifndef DEBUG_WINDOW_H
 #define DEBUG_WINDOW_H
 
-#include "config.h"
-
-#include <vector>
-#include <TTGO.h>
+#include <string.h>
 
 class DebugWindow {
     public:
-        DebugWindow(TTGOClass *ttgo, int x, int y, int width, int height);
+        DebugWindow(unsigned int cols, unsigned int rows);
         void println(const char* text);
-        void draw();
+        char getChar(unsigned int x, unsigned int y);
 
     private:
-        TTGOClass *_ttgo;
-        int _x, _y, _width, _height;
-        bool _redrawNeeded = true;
-
-        static const unsigned int _maxLines = 11;
-        unsigned int _currentLine = 0;
-        char *_lines[_maxLines];
+        unsigned int _cols, _rows;
+        unsigned int _curX, _curY;
+        char *_chars;
 };
 
 #endif
