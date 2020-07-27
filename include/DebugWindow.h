@@ -1,13 +1,14 @@
 #ifndef DEBUG_WINDOW_H
 #define DEBUG_WINDOW_H
 
+#include <Print.h>
 #include <string.h>
 
-class DebugWindow {
+class DebugWindow : public Print {
     public:
         DebugWindow(unsigned int cols, unsigned int rows);
-        void println(const char* text);
         char getChar(unsigned int x, unsigned int y);
+        size_t write(uint8_t) override;
 
     private:
         unsigned int _cols, _rows;
@@ -16,6 +17,8 @@ class DebugWindow {
         unsigned int *_rowIndex;
 
         void shiftLinesUp(void);
+        void nextChar();
+        void nextLine();
 };
 
 #endif

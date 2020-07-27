@@ -20,15 +20,37 @@ DebugWindow::DebugWindow(unsigned int cols, unsigned int rows)
     _curY = 0;
 }
 
-void DebugWindow::println(const char* text) {
+size_t DebugWindow::write(uint8_t chr) {
+    if (chr == '\r') return 1;
+
+    if (chr == '\n') {
+        nextLine();
+        return 1;
+    }
+
+    if (chr < 32) return 1;
+
+    *(_chars + _rowIndex[_curY] * _cols + _curX) = chr;
+    nextChar();
+
+    return 1;
+}
+
+void DebugWindow::nextChar() {
+    _curX++;
+    if (_curX >= _cols) {
+        nextLine();
+    }
+}
+
+void DebugWindow::nextLine() {
+    _curX = 0;
+    _curY++;
+
     if (_curY >= _rows) {
         _curY--;
         shiftLinesUp();
     }
-
-    strcpy(_chars + _rowIndex[_curY] * _cols, text);
-    _curY++;
-    _curX = 0;
 }
 
 void DebugWindow::shiftLinesUp() {

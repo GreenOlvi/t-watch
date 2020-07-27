@@ -8,8 +8,8 @@ DebugWindowGui::DebugWindowGui(TTGOClass *ttgo, int x, int y, int width, int hei
     _debug = new DebugWindow(_cols, _rows);
 }
 
-void DebugWindowGui::println(const char* text) {
-    _debug->println(text);
+size_t DebugWindowGui::write(uint8_t chr) {
+    return _debug->write(chr);
 }
 
 void DebugWindowGui::draw() {

@@ -2,14 +2,15 @@
 #define DEBUG_WINDOW_GUI_H
 
 #include "config.h"
+#include <Print.h>
 #include <TTGO.h>
 #include "DebugWindow.h"
 
-class DebugWindowGui {
+class DebugWindowGui : public Print {
     public:
         DebugWindowGui(TTGOClass *ttgo, int x, int y, int width, int height);
-        void println(const char* text);
         void draw();
+        size_t write(uint8_t) override;
 
     private:
         TTGOClass *_ttgo;
