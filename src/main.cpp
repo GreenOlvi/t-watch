@@ -59,6 +59,38 @@ void gui_loop() {
     }
 }
 
+bool isStandby = false;
+
+void onButtonPress() {
+    if (!isStandby) {
+        isStandby = true;
+
+        debug->println("Going to sleep...");
+        ttgo->bl->adjust(0);
+        ttgo->displaySleep();
+        ttgo->closeBL();
+
+        gpio_wakeup_enable((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
+        esp_sleep_enable_gpio_wakeup();
+        esp_light_sleep_start();
+    } else {
+        isStandby = false;
+
+        debug->println("Waking up...");
+        ttgo->openBL();
+        ttgo->displayWakeup();
+        ttgo->bl->adjust(30);
+    }
+}
+
+void pmuLoop() {
+    ttgo->power->readIRQ();
+    if (ttgo->power->isPEKShortPressIRQ()) {
+        onButtonPress();
+    }
+    ttgo->power->clearIRQ();
+}
+
 unsigned long _nextSyncCheck = 0;
 void time_sync_loop() {
     if (!_timeSynched && wifi.isConnected() && millis() > _nextSyncCheck) {
@@ -79,7 +111,10 @@ void time_sync_loop() {
 }
 
 void loop() {
-    wifi.update(millis());
-    gui_loop();
-    time_sync_loop();
+    pmuLoop();
+    if (!isStandby) {
+        wifi.update(millis());
+        gui_loop();
+        time_sync_loop();
+    }
 }
