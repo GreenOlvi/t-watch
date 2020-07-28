@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <WiFiModule.h>
 #include "config.h"
 #include "secrets.h"
 
@@ -34,16 +34,25 @@ void setup() {
     wifi.connect();
 }
 
+void drawTime() {
+    ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
+    snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
+    ttgo->tft->drawString(buf, 5, 20, 7);
+}
+
+void drawBatteryState() {
+    ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+    ttgo->tft->fillRect(210, 0, 30, 10, TFT_BLACK);
+    sprintf(buf, "%d", ttgo->power->getBattPercentage());
+    auto width = ttgo->tft->textWidth(buf);
+    ttgo->tft->drawString(buf, TFT_WIDTH - width, 0, 1);
+}
+
 unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
     if (millis() > _nextGuiUpdate) {
-        ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
-        snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
-        ttgo->tft->drawString(buf, 5, 20, 7);
-
-        snprintf(buf, sizeof(buf), "Current time: %s", ttgo->rtc->formatDateTime());
-        debug->println(buf);
-
+        drawTime();
+        drawBatteryState();
         debug->draw();
 
         _nextGuiUpdate += 1000;
