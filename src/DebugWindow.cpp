@@ -11,11 +11,6 @@ DebugWindow::DebugWindow(unsigned int cols, unsigned int rows)
 
     memset(_chars, 0, _cols * _rows);
 
-    _chars[0] = '0';
-    _chars[_cols - 1] = '1';
-    _chars[_cols * (_rows - 1)] = '2';
-    _chars[_cols * _rows - 1] = '3';
-
     _curX = 0;
     _curY = 0;
 }
