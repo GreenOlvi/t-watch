@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include "Module.h"
 
+typedef std::function<void(WiFiClass *wifi)> WiFiModuleEvent;
+
 class WiFiModule : public Module {
     public:
         WiFiModule(const char* hostname, const char* ssid, const char* password);
@@ -11,8 +13,12 @@ class WiFiModule : public Module {
         void update(const unsigned long t) override;
         void connect(void);
         void disconnect(void);
-        bool isConnected();
-        void onConnect(WiFiEventFuncCb cbEvent);
+        bool isConnected(void);
+
+        void onStart(WiFiModuleEvent wifi);
+        void onStop(WiFiModuleEvent wifi);
+        void onConnect(WiFiModuleEvent wifi);
+        void onDisconnect(WiFiModuleEvent wifi);
 
     private:
         const char* _hostname;

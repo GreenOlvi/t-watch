@@ -26,9 +26,16 @@ void setup() {
 
     debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
     wifi.setup();
-    wifi.onConnect([](WiFiEvent_t event, WiFiEventInfo_t info) {
-        debug->print("Got IP: ");
-        debug->println(WiFi.localIP().toString());
+
+    wifi.onStart([](WiFiClass *wifi) { debug->println("WiFi started"); });
+    wifi.onStop([](WiFiClass *wifi) { debug->println("WiFi stopped"); });
+    wifi.onDisconnect([](WiFiClass *wifi) { debug->println("WiFi disconnected"); });
+
+    wifi.onConnect([](WiFiClass *wifi) {
+        debug->print("Connected to ");
+        debug->println(wifi->SSID());
+        debug->print("IP: ");
+        debug->println(wifi->localIP().toString());
     });
 
     wifi.connect();

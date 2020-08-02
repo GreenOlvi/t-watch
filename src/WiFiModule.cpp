@@ -21,8 +21,28 @@ bool WiFiModule::isConnected() {
     return WiFi.status() == WL_CONNECTED;
 }
 
-void WiFiModule::onConnect(WiFiEventFuncCb event) {
-    WiFi.onEvent(event, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
+void WiFiModule::onStart(WiFiModuleEvent moduleEvent) {
+    WiFi.onEvent([moduleEvent](WiFiEvent_t event, WiFiEventInfo_t info) {
+        moduleEvent(&WiFi);
+    }, WiFiEvent_t::SYSTEM_EVENT_STA_START);
+}
+
+void WiFiModule::onStop(WiFiModuleEvent moduleEvent) {
+    WiFi.onEvent([moduleEvent](WiFiEvent_t event, WiFiEventInfo_t info) {
+        moduleEvent(&WiFi);
+    }, WiFiEvent_t::SYSTEM_EVENT_STA_STOP);
+}
+
+void WiFiModule::onConnect(WiFiModuleEvent moduleEvent) {
+    WiFi.onEvent([moduleEvent](WiFiEvent_t event, WiFiEventInfo_t info) {
+        moduleEvent(&WiFi);
+    }, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
+}
+
+void WiFiModule::onDisconnect(WiFiModuleEvent moduleEvent) {
+    WiFi.onEvent([moduleEvent](WiFiEvent_t event, WiFiEventInfo_t info) {
+        moduleEvent(&WiFi);
+    }, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
 }
 
 void WiFiModule::update(const unsigned long t) {
