@@ -1,7 +1,8 @@
 #include <Arduino.h>
-#include <WiFiModule.h>
 #include "config.h"
 #include "secrets.h"
+#include "WiFiModule.h"
+#include "TouchModule.h"
 
 #include "gui/DebugWindowGui.h"
 
@@ -14,6 +15,7 @@ const char wifiSsid[] = STASSID;
 const char wifiPass[] = STAPSK;
 
 WiFiModule wifi(hostname, wifiSsid, wifiPass);
+TouchModule touch;
 
 char buf[128];
 bool _timeSynched = false;
@@ -39,10 +41,19 @@ void setup() {
     });
 
     wifi.connect();
+
+    touch.setup();
+    touch.onTouch([](TP_Point point) {
+        debug->printf("Touched at [%d,%d]\n", point.x, point.y);
+    });
 }
 
 void drawTime() {
-    ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
+    if (touch.isTouching()) {
+        ttgo->tft->setTextColor(TFT_BLUE, TFT_BLACK);
+    } else {
+        ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
+    }
     snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
     ttgo->tft->drawString(buf, 5, 20, 7);
 }
@@ -121,6 +132,7 @@ void loop() {
     pmuLoop();
     if (!isStandby) {
         wifi.update(millis());
+        touch.update(millis());
         gui_loop();
         time_sync_loop();
     }
