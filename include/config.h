@@ -2,7 +2,7 @@
 #define _CONFIG_H 
 
 #define LILYGO_WATCH_2020_V1
-#define LILYGO_WATCH_LVGL     //To use LVGL, you need to enable the macro LVGL
+#include <Arduino.h>
 #include <LilyGoWatch.h>
 
 #define DEBUG

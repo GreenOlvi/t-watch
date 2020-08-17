@@ -3,6 +3,7 @@
 #include "secrets.h"
 #include "WiFiModule.h"
 #include "TouchModule.h"
+#include "MotorModule.h"
 
 #include "gui/DebugWindowGui.h"
 
@@ -16,6 +17,7 @@ const char wifiPass[] = STAPSK;
 
 WiFiModule wifi(hostname, wifiSsid, wifiPass);
 TouchModule touch;
+MotorModule motor(MOTOR_PIN);
 
 char buf[128];
 bool _timeSynched = false;
@@ -24,7 +26,6 @@ void setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
     ttgo->openBL();
-    ttgo->bl->adjust(30);
 
     debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
     wifi.setup();
@@ -42,10 +43,16 @@ void setup() {
 
     wifi.connect();
 
+    motor.setup();
+    motor.vibe(1000);
+
     touch.setup();
     touch.onTouch([](TP_Point point) {
+        motor.vibe(10);
         debug->printf("Touched at [%d,%d]\n", point.x, point.y);
     });
+
+    ttgo->bl->adjust(30);
 }
 
 void drawTime() {
