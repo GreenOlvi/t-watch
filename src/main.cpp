@@ -4,6 +4,7 @@
 #include "WiFiModule.h"
 #include "TouchModule.h"
 #include "MotorModule.h"
+#include "MqttModule.h"
 
 #include "gui/DebugWindowGui.h"
 
@@ -11,7 +12,7 @@ TTGOClass *ttgo;
 
 DebugWindowGui *debug;
 
-const char hostname[] = "t-watch";
+const char hostname[] = HOSTNAME;
 const char wifiSsid[] = STASSID;
 const char wifiPass[] = STAPSK;
 
@@ -19,8 +20,15 @@ WiFiModule wifi(hostname, wifiSsid, wifiPass);
 TouchModule touch;
 MotorModule motor(MOTOR_PIN);
 
+IPAddress brokerIp(MQTT_HOST_IP);
+MqttModule mqtt(&wifi, HOSTNAME, brokerIp);
+
 char buf[128];
 bool _timeSynched = false;
+
+void publishCommand() {
+    mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
+}
 
 void setup() {
     ttgo = TTGOClass::getWatch();
@@ -50,9 +58,14 @@ void setup() {
     touch.onTouch([](TP_Point point) {
         motor.vibe(10);
         debug->printf("Touched at [%d,%d]\n", point.x, point.y);
+        publishCommand();
     });
 
     ttgo->bl->adjust(30);
+
+    mqtt.debug = debug;
+    mqtt.setup();
+    mqtt.stayConnected(true);
 }
 
 void drawTime() {
@@ -130,7 +143,7 @@ void time_sync_loop() {
             debug->println("Time synched");
             ttgo->rtc->syncToRtc();
             _timeSynched = true;
-            wifi.disconnect();
+            // wifi.disconnect();
         }
     }
 }
@@ -140,6 +153,7 @@ void loop() {
     if (!isStandby) {
         wifi.update(millis());
         touch.update(millis());
+        mqtt.update(millis());
         gui_loop();
         time_sync_loop();
     }

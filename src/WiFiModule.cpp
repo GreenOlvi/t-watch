@@ -21,6 +21,10 @@ bool WiFiModule::isConnected() {
     return WiFi.status() == WL_CONNECTED;
 }
 
+WiFiClient WiFiModule::client() {
+    return WiFiClient();
+}
+
 void WiFiModule::onStart(WiFiModuleEvent moduleEvent) {
     WiFi.onEvent([moduleEvent](WiFiEvent_t event, WiFiEventInfo_t info) {
         moduleEvent(&WiFi);

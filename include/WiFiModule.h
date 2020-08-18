@@ -14,6 +14,7 @@ class WiFiModule : public Module {
         void connect(void);
         void disconnect(void);
         bool isConnected(void);
+        WiFiClient client();
 
         void onStart(WiFiModuleEvent wifi);
         void onStop(WiFiModuleEvent wifi);

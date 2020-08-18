@@ -7,9 +7,12 @@
 
 #define DEBUG
 
+#define HOSTNAME "t-watch"
+
 #define TZ "UTC"
 #define ntp0 "0.pool.ntp.org"
 #define ntp1 "1.pool.ntp.org"
 #define ntp2 "2.pool.ntp.org"
+#define TASMOTA_TOPIC "cmnd/tasmota/POWER"
 
 #endif
