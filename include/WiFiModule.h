@@ -24,8 +24,6 @@ class WiFiModule : public Module {
         const char* _hostname;
         const char* _ssid;
         const char* _password;
-
-        void onConnectedHandler();
 };
 
 #endif
