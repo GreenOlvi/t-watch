@@ -5,6 +5,7 @@
 #include "Module.h"
 #include "WiFiModule.h"
 #include <PubSubClient.h>
+#include <ESPmDNS.h>
 
 class MqttModule : public Module {
     public:
@@ -16,9 +17,13 @@ class MqttModule : public Module {
         void update(const unsigned long t) override;
         void publish(const char *topic, const char *payload);
         void stayConnected(bool value);
+        bool connected();
     private:
         void connect(void);
 
+        IPAddress _ip;
+        const char *_hostname;
+        uint16_t _port;
         bool _stayConnected;
         unsigned long _lastUpdate = 0;
         const char *_clientId;

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ESPmDNS.h>
 #include "config.h"
 #include "secrets.h"
 #include "WiFiModule.h"
@@ -20,14 +21,14 @@ WiFiModule wifi(hostname, wifiSsid, wifiPass);
 TouchModule touch;
 MotorModule motor(MOTOR_PIN);
 
-IPAddress brokerIp(MQTT_HOST_IP);
-MqttModule mqtt(&wifi, HOSTNAME, brokerIp);
+MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
 char buf[128];
 bool _timeSynched = false;
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
+    debug->printf("Mqtt connected: %s\n", mqtt.connected() ? "true" : "false");
 }
 
 void setup() {
@@ -50,7 +51,7 @@ void setup() {
     });
 
     wifi.connect();
-
+    MDNS.begin(HOSTNAME);
     motor.setup();
     motor.vibe(1000);
 
@@ -66,6 +67,10 @@ void setup() {
     mqtt.debug = debug;
     mqtt.setup();
     mqtt.stayConnected(true);
+
+    auto ip = MDNS.queryHost(MQTT_HOST);
+    debug->print("Mqtt broker: ");
+    debug->println(ip.toString());
 }
 
 void drawTime() {

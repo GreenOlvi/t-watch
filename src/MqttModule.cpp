@@ -1,18 +1,22 @@
 #include "MqttModule.h"
 
 MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const char *hostname, uint16_t port) :
-    _clientId(clientId) {
+    _hostname(hostname), _port(port), _clientId(clientId) {
     _wifi = wifiModule->client();
-    _client = PubSubClient(hostname, port, _wifi);
+    _client = PubSubClient(_wifi);
 }
 
 MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAddress ip, uint16_t port) :
-    _clientId(clientId) {
+    _ip(ip), _hostname(nullptr), _port(port), _clientId(clientId) {
     _wifi = wifiModule->client();
-    _client = PubSubClient(ip, port, _wifi);
+    _client = PubSubClient(_wifi);
 }
 
 void MqttModule::setup() {
+    if (!_ip) {
+        _ip = MDNS.queryHost(_hostname);
+    }
+    _client.setServer(_ip, _port);
 }
 
 void MqttModule::update(const unsigned long t) {
@@ -34,6 +38,10 @@ void MqttModule::publish(const char *topic, const char *payload) {
 
 void MqttModule::stayConnected(bool value) {
     _stayConnected = value;
+}
+
+bool MqttModule::connected() {
+    return _client.connected();
 }
 
 void MqttModule::connect() {
