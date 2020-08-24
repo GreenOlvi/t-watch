@@ -30,7 +30,7 @@ void MqttModule::update(const unsigned long t) {
             _lastReconnectUpdate = t;
             if (connect()) {
                 debug->println("MQTT connected");
-                if (_client.subscribe("stat/#")) {
+                if (_client.subscribe(_subscribedTopic)) {
                     debug->println("Topic subscribed");
                 }
             }
@@ -55,7 +55,6 @@ bool MqttModule::connected() {
 }
 
 void MqttModule::subscribe(const char *topic, CallbackFn callback) {
-    _client.subscribe(topic);
     //TODO Subscribe to more than one topic
     _subscribedTopic = topic;
     _subscribedCallback = callback;
