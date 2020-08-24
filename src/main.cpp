@@ -24,7 +24,6 @@ MotorModule motor(MOTOR_PIN);
 MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
 char buf[128];
-bool _timeSynched = false;
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
@@ -53,7 +52,7 @@ void setup() {
     wifi.connect();
     MDNS.begin(HOSTNAME);
     motor.setup();
-    motor.vibe(1000);
+    motor.vibe(500);
 
     touch.setup();
     touch.onTouch([](TP_Point point) {
@@ -68,15 +67,23 @@ void setup() {
     mqtt.setup();
     mqtt.stayConnected(true);
 
-    auto ip = MDNS.queryHost(MQTT_HOST);
-    debug->print("Mqtt broker: ");
-    debug->println(ip.toString());
+    mqtt.subscribe("stat/tasmota/POWER", [] (char *topic, uint8_t *data, unsigned int length) {
+        debug->print("Light is ");
+        for (int i = 0; i < length; i++) {
+            debug->print((char)data[i]);
+        }
+        debug->println();
+    });
 }
 
-void drawTime() {
-    if (touch.isTouching()) {
+void drawTime()
+{
+    if (touch.isTouching())
+    {
         ttgo->tft->setTextColor(TFT_BLUE, TFT_BLACK);
-    } else {
+    }
+    else
+    {
         ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
     }
     snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
@@ -134,6 +141,7 @@ void pmuLoop() {
     ttgo->power->clearIRQ();
 }
 
+bool _timeSynched = false;
 unsigned long _nextSyncCheck = 0;
 void time_sync_loop() {
     if (!_timeSynched && wifi.isConnected() && millis() > _nextSyncCheck) {

@@ -3,7 +3,7 @@
 
 #define STASSID "..."
 #define STAPSK "..."
-#define MQTT_HOST_IP 127, 0, 0, 1
+#define MQTT_HOST "raspizero"
 
 #error Fill the values in secrets.h
 
