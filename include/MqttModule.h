@@ -23,14 +23,23 @@ class MqttModule : public Module {
         bool connected();
         void subscribe(const char *topic, CallbackFn callback);
     private:
+        enum State {
+            unknown,
+            resolve_hostname,
+            do_connect,
+        };
+
+        bool tryResolveHostname(const unsigned long t);
         bool connect(void);
         void callback(char *topic, uint8_t *data, unsigned int length);
         bool topicMatches(const char *subscribed, const char *topic);
 
+        State _state;
         IPAddress _ip;
         const char *_hostname;
         uint16_t _port;
         bool _stayConnected;
+        unsigned long _lastResolveUpdate = 0;
         unsigned long _lastReconnectUpdate = 0;
         const char *_clientId;
         PubSubClient _client;
