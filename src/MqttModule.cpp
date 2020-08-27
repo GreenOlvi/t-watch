@@ -22,20 +22,26 @@ void MqttModule::setup() {
 void MqttModule::update(const unsigned long t) {
     switch (_state) {
         case resolve_hostname:
-            if (tryResolveHostname(t)) {
+            if (WiFi.isConnected() && tryResolveHostname(t)) {
                 _client.setServer(_ip, _port);
                 _state = do_connect;
             }
             break;
         case do_connect:
             if (!_client.connected()) {
-                if (_stayConnected && WiFi.isConnected() && t - _lastReconnectUpdate >= ReconnectInterval) {
-                    _lastReconnectUpdate = t;
+                if (_stayConnected && WiFi.isConnected() && t - _lastReconnectUpdate >= _reconnectInterval) {
                     if (connect()) {
+                        _retryCount = 0;
                         debug->println("MQTT connected");
                         if (_client.subscribe(_subscribedTopic)) {
                             debug->println("Topic subscribed");
                         }
+                    } else {
+                        _lastReconnectUpdate = t;
+                        _retryCount++;
+                        unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
+                        _reconnectInterval = sec * 1000;
+                        debug->printf("MQTT connection failed. Waiting %d seconds\n", sec);
                     }
                 }
             } else {
@@ -51,6 +57,8 @@ void MqttModule::update(const unsigned long t) {
 void MqttModule::publish(const char *topic, const char *payload) {
     if (_client.connected()) {
         _client.publish(topic, payload);
+    } else {
+        debug->println("Mqtt disconnected");
     }
 }
 
@@ -73,16 +81,21 @@ bool MqttModule::tryResolveHostname(const unsigned long t) {
         return true;
     }
 
-    if (t - _lastReconnectUpdate >= ReconnectInterval) {
+    if (t - _lastReconnectUpdate >= _reconnectInterval) {
         debug->printf("Resolving broker [%s]\n", _hostname);
         _ip = MDNS.queryHost(_hostname);
 
         if (_ip) {
+            _retryCount = 0;
             debug->printf("Broker ip: %s\n", _ip.toString().c_str());
             return true;
         }
 
-        debug->println("Could not resolve broker ip");
+        _lastReconnectUpdate = t;
+        _retryCount++;
+        byte sec = _retryCount < 8 ? pow(2, _retryCount) : 256;
+        _reconnectInterval = sec * 1000;
+        debug->printf("Could not resolve broker ip. Waiting %d seconds\n", sec);
     }
     return false;
 }

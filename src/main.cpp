@@ -27,7 +27,6 @@ char buf[128];
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
-    debug->printf("Mqtt connected: %s\n", mqtt.connected() ? "true" : "false");
 }
 
 void setup() {

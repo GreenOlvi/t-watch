@@ -6,8 +6,7 @@
 #include "WiFiModule.h"
 #include <PubSubClient.h>
 #include <ESPmDNS.h>
-
-#define ReconnectInterval 10000
+#include <math.h>
 
 typedef std::function<void(char*, uint8_t*, unsigned int)> CallbackFn;
 
@@ -41,6 +40,10 @@ class MqttModule : public Module {
         bool _stayConnected;
         unsigned long _lastResolveUpdate = 0;
         unsigned long _lastReconnectUpdate = 0;
+
+        unsigned long _reconnectInterval = 1000;
+        unsigned int _retryCount = 0;
+
         const char *_clientId;
         PubSubClient _client;
         WiFiClient _wifi;
