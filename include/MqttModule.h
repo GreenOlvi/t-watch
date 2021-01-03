@@ -24,6 +24,8 @@ class MqttModule : public Module {
         void update(const unsigned long t) override;
         void publish(const char *topic, const char *payload);
         void stayConnected(bool value);
+        void connect();
+        void disconnect();
         bool isConnected();
         void subscribe(const char *topic, CallbackFn callback);
     private:
@@ -36,7 +38,7 @@ class MqttModule : public Module {
         IPAddress _ip;
         const char *_hostname;
         uint16_t _port;
-        bool _stayConnected;
+        bool _stayConnected = false;
         int _retryCount = 0;
         unsigned long _nextRetry = 0;
         const char *_clientId;

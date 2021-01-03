@@ -64,7 +64,7 @@ void setup() {
 
     mqtt.debug = debug;
     mqtt.setup();
-    mqtt.stayConnected(true);
+    mqtt.connect();
 
     mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
         debug->print("Message on [");

@@ -28,6 +28,7 @@ void MqttModule::update(const unsigned long t) {
             } else {
                 unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
                 debug->printf("MQTT connection failed. Waiting %d seconds\n", sec);
+                _retryCount++;
                 _nextRetry = t + sec * 1000;
             }
         }
@@ -43,15 +44,18 @@ void MqttModule::update(const unsigned long t) {
 void MqttModule::publish(const char *topic, const char *payload) {
     if (_client.connected()) {
         _client.publish(topic, payload);
-    } else {
-        debug->println("Mqtt disconnected");
     }
 }
 
-void MqttModule::stayConnected(bool value) {
-    _stayConnected = value;
+void MqttModule::connect() {
+    _stayConnected = true;
     _nextRetry = 0;
 }
+
+void MqttModule::disconnect() {
+    _stayConnected = false;
+}
+
 
 bool MqttModule::isConnected() {
     return _client.connected();
@@ -74,7 +78,6 @@ bool MqttModule::reconnect() {
             _client.setServer(_ip, _port);
         }
 
-        debug->println("Connecting to Mqtt broker");
         if (_client.connect(_clientId)) {
             resubscribe();
             return true;

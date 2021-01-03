@@ -10,11 +10,11 @@ void WiFiModule::setup() {
 }
 
 void WiFiModule::connect() {
-    WiFi.begin(_ssid, _password);
+    _stayConnected = true;
 }
 
 void WiFiModule::disconnect() {
-    WiFi.disconnect(true);
+    _stayConnected = false;
 }
 
 bool WiFiModule::isConnected() {
@@ -50,4 +50,15 @@ void WiFiModule::onDisconnect(WiFiModuleEvent moduleEvent) {
 }
 
 void WiFiModule::update(const unsigned long t) {
+    if (!isConnected() && _stayConnected) {
+        reconnect();
+    }
+    else if (isConnected() && !_stayConnected)
+    {
+        WiFi.disconnect(true);
+    }
+}
+
+bool WiFiModule::reconnect() {
+    return WiFi.begin(_ssid, _password) == WL_CONNECTED;
 }

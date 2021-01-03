@@ -25,6 +25,8 @@ class WiFiModule : public Module {
         const char* _hostname;
         const char* _ssid;
         const char* _password;
+        bool _stayConnected = false;
+        bool reconnect();
 };
 
 #endif
