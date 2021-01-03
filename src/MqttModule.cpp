@@ -13,21 +13,26 @@ MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAdd
 }
 
 void MqttModule::setup() {
-    if (!_ip) {
-        _ip = MDNS.queryHost(_hostname);
-    }
-    _client.setServer(_ip, _port);
+    _client.setCallback([this] (char *topic, uint8_t *data, unsigned int length) {
+        this->callback(topic, data, length);
+    });
 }
 
 void MqttModule::update(const unsigned long t) {
-    if (t >= _lastUpdate) {
-        if (_stayConnected && WiFi.isConnected() && !_client.connected()) {
-            connect();
+    if (!_client.connected()) {
+        if (_stayConnected && t - _lastReconnectUpdate >= ReconnectInterval) {
+            if (reconnect()) {
+                debug->println("MQTT connected");
+            }
+            _lastReconnectUpdate = t;
         }
-
-        _lastUpdate += 10000;
+    } else {
+        if (_stayConnected) {
+            _client.loop();
+        } else {
+            _client.disconnect();
+        }
     }
-    _client.loop();
 }
 
 void MqttModule::publish(const char *topic, const char *payload) {
@@ -40,10 +45,58 @@ void MqttModule::stayConnected(bool value) {
     _stayConnected = value;
 }
 
-bool MqttModule::connected() {
+bool MqttModule::isConnected() {
     return _client.connected();
 }
 
-void MqttModule::connect() {
-    _client.connect(_clientId);
+void MqttModule::subscribe(const char *topic, CallbackFn callback) {
+    _subscribedTopic = topic;
+    _subscribedCallback = callback;
+}
+
+bool MqttModule::reconnect() {
+    if (WiFi.isConnected()) {
+        if (!_ip) {
+            if (!resolveHostname()) {
+                debug->println("Mqtt broker hostname not resolved");
+                return false;
+            }
+            debug->println("Mqtt broker hostname resolved");
+            _client.setServer(_ip, _port);
+        }
+
+        debug->println("Connecting to Mqtt broker");
+        if (_client.connect(_clientId)) {
+            resubscribe();
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
+}
+
+bool MqttModule::resubscribe() {
+    if (!_client.connected()) return false;
+
+    return _client.subscribe(_subscribedTopic);
+}
+
+void MqttModule::callback(char *topic, uint8_t *data, unsigned int length) {
+    if (_subscribedCallback && topicMatches(_subscribedTopic, topic)) {
+        _subscribedCallback(topic, data, length);
+    }
+}
+
+bool MqttModule::topicMatches(const char *subscribed, const char *topic) {
+    return strcmp(subscribed, topic) == 0;
+}
+
+bool MqttModule::resolveHostname() {
+    auto ip = MDNS.queryHost(_hostname);
+    if (ip) {
+        _ip = ip;
+        return true;
+    }
+    return false;
 }

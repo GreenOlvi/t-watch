@@ -28,7 +28,7 @@ bool _timeSynched = false;
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
-    debug->printf("Mqtt connected: %s\n", mqtt.connected() ? "true" : "false");
+    debug->printf("Mqtt connected: %s\n", mqtt.isConnected() ? "true" : "false");
 }
 
 void setup() {
@@ -53,7 +53,7 @@ void setup() {
     wifi.connect();
     MDNS.begin(HOSTNAME);
     motor.setup();
-    motor.vibe(1000);
+    motor.vibe(500);
 
     touch.setup();
     touch.onTouch([](TP_Point point) {
@@ -68,9 +68,15 @@ void setup() {
     mqtt.setup();
     mqtt.stayConnected(true);
 
-    auto ip = MDNS.queryHost(MQTT_HOST);
-    debug->print("Mqtt broker: ");
-    debug->println(ip.toString());
+    mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
+        debug->print("Message on [");
+        debug->print(topic);
+        debug->print("] ");
+        for (int i=0;i<length;i++) {
+            debug->print((char)data[i]);
+        }
+        debug->println();
+    });
 }
 
 void drawTime() {
@@ -148,7 +154,6 @@ void time_sync_loop() {
             debug->println("Time synched");
             ttgo->rtc->syncToRtc();
             _timeSynched = true;
-            // wifi.disconnect();
         }
     }
 }
