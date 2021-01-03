@@ -1,13 +1,13 @@
 #include "MqttModule.h"
 
 MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const char *hostname, uint16_t port) :
-    _state(resolve_hostname), _hostname(hostname), _port(port), _clientId(clientId) {
+    _hostname(hostname), _port(port), _clientId(clientId) {
     _wifi = wifiModule->client();
     _client = PubSubClient(_wifi);
 }
 
 MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAddress ip, uint16_t port) :
-    _state(do_connect), _ip(ip), _hostname(nullptr), _port(port), _clientId(clientId)  {
+    _ip(ip), _hostname(nullptr), _port(port), _clientId(clientId)  {
     _wifi = wifiModule->client();
     _client = PubSubClient(_wifi);
     _client.setServer(_ip, _port);
@@ -20,38 +20,24 @@ void MqttModule::setup() {
 }
 
 void MqttModule::update(const unsigned long t) {
-    switch (_state) {
-        case resolve_hostname:
-            if (WiFi.isConnected() && tryResolveHostname(t)) {
-                _client.setServer(_ip, _port);
-                _state = do_connect;
-            }
-            break;
-        case do_connect:
-            if (!_client.connected()) {
-                if (_stayConnected && WiFi.isConnected() && t - _lastReconnectUpdate >= _reconnectInterval) {
-                    if (connect()) {
-                        _retryCount = 0;
-                        debug->println("MQTT connected");
-                        if (_client.subscribe(_subscribedTopic)) {
-                            debug->println("Topic subscribed");
-                        }
-                    } else {
-                        _lastReconnectUpdate = t;
-                        _retryCount++;
-                        unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
-                        _reconnectInterval = sec * 1000;
-                        debug->printf("MQTT connection failed. Waiting %d seconds\n", sec);
-                    }
-                }
+    if (!_client.connected()) {
+        if (_stayConnected && t > _nextRetry) {
+            if (reconnect()) {
+                debug->println("MQTT connected");
+                _retryCount = 0;
             } else {
-                _client.loop();
+                unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
+                debug->printf("MQTT connection failed. Waiting %d seconds\n", sec);
+                _nextRetry = t + sec * 1000;
             }
-            break;
-        default:
-            debug->println("MqttModule is in unknown state");
-            break;
-    };
+        }
+    } else {
+        if (_stayConnected) {
+            _client.loop();
+        } else {
+            _client.disconnect();
+        }
+    }
 }
 
 void MqttModule::publish(const char *topic, const char *payload) {
@@ -64,9 +50,10 @@ void MqttModule::publish(const char *topic, const char *payload) {
 
 void MqttModule::stayConnected(bool value) {
     _stayConnected = value;
+    _nextRetry = 0;
 }
 
-bool MqttModule::connected() {
+bool MqttModule::isConnected() {
     return _client.connected();
 }
 
@@ -76,32 +63,36 @@ void MqttModule::subscribe(const char *topic, CallbackFn callback) {
     _subscribedCallback = callback;
 }
 
-bool MqttModule::tryResolveHostname(const unsigned long t) {
-    if (_ip) {
-        return true;
-    }
-
-    if (t - _lastReconnectUpdate >= _reconnectInterval) {
-        debug->printf("Resolving broker [%s]\n", _hostname);
-        _ip = MDNS.queryHost(_hostname);
-
-        if (_ip) {
-            _retryCount = 0;
-            debug->printf("Broker ip: %s\n", _ip.toString().c_str());
-            return true;
+bool MqttModule::reconnect() {
+    if (WiFi.isConnected()) {
+        if (!_ip) {
+            if (!resolveHostname()) {
+                debug->println("Mqtt broker hostname not resolved");
+                return false;
+            }
+            debug->println("Mqtt broker hostname resolved");
+            _client.setServer(_ip, _port);
         }
 
-        _lastReconnectUpdate = t;
-        _retryCount++;
-        byte sec = _retryCount < 8 ? pow(2, _retryCount) : 256;
-        _reconnectInterval = sec * 1000;
-        debug->printf("Could not resolve broker ip. Waiting %d seconds\n", sec);
+        debug->println("Connecting to Mqtt broker");
+        if (_client.connect(_clientId)) {
+            resubscribe();
+            return true;
+        } else {
+            return false;
+        }
     }
     return false;
 }
 
-bool MqttModule::connect() {
-    return _client.connect(_clientId);
+bool MqttModule::resubscribe() {
+    if (!_client.connected())
+        return false;
+
+    if (!_subscribedTopic)
+        return false;
+
+    return _client.subscribe(_subscribedTopic);
 }
 
 void MqttModule::callback(char *topic, uint8_t *data, unsigned int length) {
@@ -111,6 +102,14 @@ void MqttModule::callback(char *topic, uint8_t *data, unsigned int length) {
 }
 
 bool MqttModule::topicMatches(const char *subscribed, const char *topic) {
-    //TODO Implement matching subscriptions with '#'
     return strcmp(subscribed, topic) == 0;
+}
+
+bool MqttModule::resolveHostname() {
+    auto ip = MDNS.queryHost(_hostname);
+    if (ip) {
+        _ip = ip;
+        return true;
+    }
+    return false;
 }

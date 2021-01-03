@@ -10,40 +10,35 @@
 
 typedef std::function<void(char*, uint8_t*, unsigned int)> CallbackFn;
 
+#define DefaultMqttPort 1883
+#define ReconnectInterval 10000
+
+typedef std::function<void(char*, uint8_t*, unsigned int)> CallbackFn;
+
 class MqttModule : public Module {
     public:
         Print *debug;
-        MqttModule(WiFiModule *wifiModule, const char *clientId, const char *hostname, uint16_t port = 1883);
-        MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAddress ip, uint16_t port = 1883);
+        MqttModule(WiFiModule *wifiModule, const char *clientId, const char *hostname, uint16_t port = DefaultMqttPort);
+        MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAddress ip, uint16_t port = DefaultMqttPort);
         void setup(void) override;
         void update(const unsigned long t) override;
         void publish(const char *topic, const char *payload);
         void stayConnected(bool value);
-        bool connected();
+        bool isConnected();
         void subscribe(const char *topic, CallbackFn callback);
     private:
-        enum State {
-            unknown,
-            resolve_hostname,
-            do_connect,
-        };
-
-        bool tryResolveHostname(const unsigned long t);
-        bool connect(void);
+        bool reconnect(void);
+        bool resubscribe(void);
         void callback(char *topic, uint8_t *data, unsigned int length);
         bool topicMatches(const char *subscribed, const char *topic);
+        bool resolveHostname(void);
 
-        State _state;
         IPAddress _ip;
         const char *_hostname;
         uint16_t _port;
         bool _stayConnected;
-        unsigned long _lastResolveUpdate = 0;
-        unsigned long _lastReconnectUpdate = 0;
-
-        unsigned long _reconnectInterval = 1000;
-        unsigned int _retryCount = 0;
-
+        int _retryCount = 0;
+        unsigned long _nextRetry = 0;
         const char *_clientId;
         PubSubClient _client;
         WiFiClient _wifi;

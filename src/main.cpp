@@ -66,9 +66,11 @@ void setup() {
     mqtt.setup();
     mqtt.stayConnected(true);
 
-    mqtt.subscribe("stat/tasmota/POWER", [] (char *topic, uint8_t *data, unsigned int length) {
-        debug->print("Light is ");
-        for (int i = 0; i < length; i++) {
+    mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
+        debug->print("Message on [");
+        debug->print(topic);
+        debug->print("] ");
+        for (int i=0;i<length;i++) {
             debug->print((char)data[i]);
         }
         debug->println();
@@ -91,18 +93,37 @@ void drawTime()
 
 void drawBatteryState() {
     ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    ttgo->tft->fillRect(210, 0, 30, 10, TFT_BLACK);
     sprintf(buf, "%d", ttgo->power->getBattPercentage());
     auto width = ttgo->tft->textWidth(buf);
     ttgo->tft->drawString(buf, TFT_WIDTH - width, 0, 1);
+}
+
+void drawStatusBar() {
+    ttgo->tft->fillRect(0, 0, 30, 10, TFT_BLACK);
+
+    if (WiFi.isConnected()) {
+        ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+    } else {
+        ttgo->tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+    }
+    ttgo->tft->drawChar('W', 0, 0, 1);
+
+    if (mqtt.isConnected()) {
+        ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+    } else {
+        ttgo->tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+    }
+    ttgo->tft->drawChar('M', 10, 0, 1);
+
+    drawBatteryState();
 }
 
 unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
     if (millis() > _nextGuiUpdate) {
         drawTime();
-        drawBatteryState();
         debug->draw();
+        drawStatusBar();
 
         _nextGuiUpdate += 1000;
     }
@@ -155,7 +176,6 @@ void time_sync_loop() {
             debug->println("Time synched");
             ttgo->rtc->syncToRtc();
             _timeSynched = true;
-            // wifi.disconnect();
         }
     }
 }
