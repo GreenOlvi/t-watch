@@ -43,7 +43,8 @@ class MqttModule : public Module {
         unsigned long _nextRetry = 0;
         const char *_clientId;
         PubSubClient _client;
-        WiFiClient _wifi;
+        WiFiClient _wifiClient;
+        WiFiModule *_wifi;
 
         const char *_subscribedTopic;
         CallbackFn _subscribedCallback;

@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <ESPmDNS.h>
 #include "config.h"
 #include "secrets.h"
 #include "WiFiModule.h"
@@ -30,11 +29,14 @@ void publishCommand() {
 }
 
 void setup() {
+    Serial.begin(115200);
+
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
     ttgo->openBL();
 
     debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
+    wifi.debug = debug;
     wifi.setup();
 
     wifi.onStart([](WiFiClass *wifi) { debug->println("WiFi started"); });
@@ -49,15 +51,14 @@ void setup() {
     });
 
     wifi.connect();
-    MDNS.begin(HOSTNAME);
     motor.setup();
-    motor.vibe(500);
+    motor.vibe(100);
 
     touch.setup();
     touch.onTouch([](TP_Point point) {
-        motor.vibe(10);
+        motor.shortVibe();
         debug->printf("Touched at [%d,%d]\n", point.x, point.y);
-        publishCommand();
+        // publishCommand();
     });
 
     ttgo->bl->adjust(30);
