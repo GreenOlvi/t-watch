@@ -7,4 +7,5 @@
 .fake
 .ionide
 
+etc/*
 *.h.safe

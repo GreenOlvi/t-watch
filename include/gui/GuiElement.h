@@ -1,0 +1,12 @@
+#ifndef GuiElement_h
+#define GuiElement_h
+
+#include "config.h"
+
+class GuiElement {
+    public:
+        virtual void setup(TFT_eSPI *tft) = 0;
+        virtual TFT_eSprite* draw() = 0;
+};
+
+#endif

@@ -3,17 +3,19 @@
 
 #include "config.h"
 #include <Print.h>
-#include "Drawable.h"
+#include "GuiElement.h"
 #include "DebugWindow.h"
 
-class DebugWindowGui : public Print, public Drawable {
+class DebugWindowGui : public Print, public GuiElement {
     public:
         DebugWindowGui(int x, int y, int width, int height);
-        void draw(TFT_eSPI *tft) override;
+        void setup(TFT_eSPI *tft) override;
+        TFT_eSprite* draw() override;
         size_t write(uint8_t) override;
 
     private:
         DebugWindow *_debug;
+        TFT_eSprite *_buffer;
 
         int _x, _y, _width, _height, _cols, _rows;
 

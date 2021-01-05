@@ -7,12 +7,10 @@
 #include "MqttModule.h"
 
 #include "gui/DebugWindowGui.h"
-#include "gui/ButtonGui.h"
+#include "gui/TimeWidget.h"
 
 TTGOClass *ttgo;
 TFT_eSPI *tft;
-
-DebugWindowGui *debug;
 
 const char hostname[] = HOSTNAME;
 const char wifiSsid[] = STASSID;
@@ -24,9 +22,8 @@ MotorModule motor(MOTOR_PIN);
 
 MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
-ButtonGui b1 = ButtonGui(10, 180, 60, 40, "WiFi");
-ButtonGui b2 = ButtonGui(90, 180, 60, 40, "Mqtt");
-ButtonGui b3 = ButtonGui(170, 180, 60, 40, "Lamp");
+DebugWindowGui *debug;
+TimeWidget *timeWidget;
 
 char buf[128];
 double lps = .0;
@@ -38,32 +35,6 @@ void publishCommand() {
 bool wifiState = true;
 bool mqttState = true;
 
-void checkButtonsPressed(int x, int y)
-{
-    if (b1.isInside(x, y)) {
-        motor.shortVibe();
-        wifiState = !wifiState;
-        if (wifiState) {
-            wifi.connect();
-        } else {
-            wifi.disconnect();
-        }
-    }
-    if (b2.isInside(x, y)) {
-        motor.shortVibe();
-        mqttState = !mqttState;
-        if (mqttState) {
-            mqtt.connect();
-        } else {
-            mqtt.disconnect();
-        }
-    }
-    if (b3.isInside(x, y)) {
-        motor.shortVibe();
-        publishCommand();
-    }
-}
-
 void setup() {
     Serial.begin(115200);
 
@@ -73,6 +44,7 @@ void setup() {
     tft = ttgo->tft;
 
     debug = new DebugWindowGui(0, 80, 240, 84);
+    debug->setup(tft);
 
     wifi.debug = debug;
     wifi.setup();
@@ -81,13 +53,6 @@ void setup() {
     }
 
     motor.setup();
-
-    touch.setup();
-    touch.onTouch([](word x, word y) {
-        motor.shortVibe();
-        debug->printf("Touched at [%d,%d]\n", x, y);
-        // publishCommand();
-    });
 
     ttgo->bl->adjust(30);
 
@@ -107,14 +72,16 @@ void setup() {
         debug->println();
     });
 
-    motor.vibe(100);
-}
+    touch.setup();
+    touch.onTouch([](word x, word y) {
+        motor.shortVibe();
+        debug->printf("Touched at [%d,%d]\n", x, y);
+    });
 
-void drawTime()
-{
-    tft->setTextColor(TFT_YELLOW, TFT_BLACK);
-    snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
-    tft->drawString(buf, 5, 20, 7);
+    timeWidget = new TimeWidget(ttgo);
+    timeWidget->setup(tft);
+
+    motor.vibe(100);
 }
 
 void drawBatteryState() {
@@ -151,11 +118,8 @@ void drawStatusBar() {
 unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
     if (millis() > _nextGuiUpdate) {
-        drawTime();
-        debug->draw(tft);
-        b1.draw(tft);
-        b2.draw(tft);
-        b3.draw(tft);
+        timeWidget->draw()->pushSprite(5, 20);
+        debug->draw()->pushSprite(0, 80);
         drawStatusBar();
 
         _nextGuiUpdate += 1000;
@@ -232,7 +196,7 @@ void lpsUpdate()
 {
     if (millis() > _nextLpsUpdate) {
         lps = (loops / (millis() - _lastLpsUpdate + .0))*1000;
-        Serial.printf("%.2f lps\n", lps);
+        // Serial.printf("%.2f lps\n", lps);
         loops = 0;
         _lastLpsUpdate = millis();
         _nextLpsUpdate = _lastLpsUpdate + 2000;
