@@ -13,12 +13,12 @@ bool TouchModule::isTouching() {
 
 void TouchModule::update(unsigned long t) {
     if (t >= _nextUpdate) {
-        if (!_isTouched && _ttgo->touch->touched() && _onTouch) {
-            TP_Point point = _ttgo->touch->getPoint();
-            _onTouch(point);
+        int16_t x, y;
+        if (_onTouch && !_isTouched && _ttgo->getTouch(x, y)) {
+            _onTouch(x, y);
         }
 
-        _isTouched = _ttgo->touch->touched();
+        _isTouched = _ttgo->touch->getTouched();
         _nextUpdate = t + _updateDelay;
     }
 }

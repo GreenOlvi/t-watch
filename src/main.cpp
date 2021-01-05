@@ -60,7 +60,7 @@ void setup() {
     touch.setup();
     touch.onTouch([](TP_Point point) {
         motor.shortVibe();
-        debug->printf("Touched at [%d,%d]\n", point.x, point.y);
+        debug->printf("Touched at [%d,%d]\n", x, y);
         // publishCommand();
     });
 

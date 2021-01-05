@@ -4,7 +4,7 @@
 #include "config.h"
 #include "Module.h"
 
-typedef std::function<void(TP_Point point)> TouchModuleEvent;
+typedef std::function<void(int16_t x, int16_t y)> TouchModuleEvent;
 
 class TouchModule : public Module {
     public:
@@ -21,7 +21,7 @@ class TouchModule : public Module {
         unsigned long _nextUpdate = 0;
         bool _isTouched = false;
 
-        TouchModuleEvent _onTouch;
+        TouchModuleEvent _onTouch = nullptr;
 };
 
 #endif
