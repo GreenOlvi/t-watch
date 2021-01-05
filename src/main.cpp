@@ -9,6 +9,7 @@
 #include "gui/DebugWindowGui.h"
 
 TTGOClass *ttgo;
+TFT_eSPI *tft;
 
 DebugWindowGui *debug;
 
@@ -23,6 +24,7 @@ MotorModule motor(MOTOR_PIN);
 MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
 char buf[128];
+double lps = .0;
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
@@ -34,6 +36,7 @@ void setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
     ttgo->openBL();
+    tft = ttgo->tft;
 
     debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
     wifi.debug = debug;
@@ -80,41 +83,38 @@ void setup() {
 
 void drawTime()
 {
-    if (touch.isTouching())
-    {
-        ttgo->tft->setTextColor(TFT_BLUE, TFT_BLACK);
-    }
-    else
-    {
-        ttgo->tft->setTextColor(TFT_YELLOW, TFT_BLACK);
-    }
+    tft->setTextColor(TFT_YELLOW, TFT_BLACK);
     snprintf(buf, sizeof(buf), "%s", ttgo->rtc->formatDateTime());
-    ttgo->tft->drawString(buf, 5, 20, 7);
+    tft->drawString(buf, 5, 20, 7);
 }
 
 void drawBatteryState() {
-    ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    sprintf(buf, "%d", ttgo->power->getBattPercentage());
-    auto width = ttgo->tft->textWidth(buf);
-    ttgo->tft->drawString(buf, TFT_WIDTH - width, 0, 1);
+    tft->setTextColor(TFT_GREEN, TFT_BLACK);
+    sprintf(buf, "%.2fV", ttgo->power->getBattVoltage() / 1000.0);
+    auto width = tft->textWidth(buf);
+    tft->drawString(buf, TFT_WIDTH - width, 0, 1);
 }
 
 void drawStatusBar() {
-    ttgo->tft->fillRect(0, 0, 30, 10, TFT_BLACK);
+    tft->fillRect(0, 0, 30, 10, TFT_BLACK);
 
     if (WiFi.isConnected()) {
-        ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+        tft->setTextColor(TFT_GREEN, TFT_BLACK);
     } else {
-        ttgo->tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+        tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
     }
-    ttgo->tft->drawChar('W', 0, 0, 1);
+    tft->drawChar('W', 0, 0, 1);
 
     if (mqtt.isConnected()) {
-        ttgo->tft->setTextColor(TFT_GREEN, TFT_BLACK);
+        tft->setTextColor(TFT_GREEN, TFT_BLACK);
     } else {
-        ttgo->tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+        tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
     }
-    ttgo->tft->drawChar('M', 10, 0, 1);
+    tft->drawChar('M', 10, 0, 1);
+
+    snprintf(buf, sizeof(buf), "%.2flps", lps);
+    tft->setTextColor(TFT_GREEN, TFT_BLACK);
+    tft->drawString(buf, 30, 0, 1);
 
     drawBatteryState();
 }
@@ -181,13 +181,27 @@ void time_sync_loop() {
     }
 }
 
+unsigned long loops = 0;
+unsigned long _nextLpsUpdate = 1000;
+unsigned long _lastLpsUpdate = 0;
+void lpsUpdate()
+{
+    if (millis() > _nextLpsUpdate) {
+        lps = (loops / (millis() - _lastLpsUpdate + .0))*1000;
+        Serial.printf("%.2f lps\n", lps);
+        loops = 0;
+        _lastLpsUpdate = millis();
+        _nextLpsUpdate = _lastLpsUpdate + 2000;
+    }
+}
+
 void loop() {
+    loops++;
     pmuLoop();
-    if (!isStandby) {
         wifi.update(millis());
+    mqtt.update(millis());
         touch.update(millis());
-        mqtt.update(millis());
         gui_loop();
         time_sync_loop();
-    }
+    lpsUpdate();
 }
