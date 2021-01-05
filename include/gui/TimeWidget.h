@@ -12,6 +12,7 @@ class TimeWidget : public GuiElement {
     private:
         TTGOClass *_ttgo;
         TFT_eSprite *_buffer;
+        unsigned long _lastRedraw = 0;
 };
 
 #endif

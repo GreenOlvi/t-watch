@@ -6,6 +6,8 @@ DebugWindowGui::DebugWindowGui(int x, int y, int width, int height)
     _rows = (_height - 2) / _charHeight;
 
     _debug = new DebugWindow(_cols, _rows);
+
+    _debug->onChange([this](void) { this->_shouldRedraw = true; });
 }
 
 size_t DebugWindowGui::write(uint8_t chr) {
@@ -19,6 +21,10 @@ void DebugWindowGui::setup(TFT_eSPI *tft) {
 }
 
 TFT_eSprite* DebugWindowGui::draw() {
+    if (!_shouldRedraw) {
+        return _buffer;
+    }
+
     _buffer->fillSprite(TFT_BLACK);
     _buffer->setTextColor(TFT_GREEN, TFT_BLACK);
     _buffer->setTextFont(1);

@@ -18,6 +18,7 @@ class DebugWindowGui : public Print, public GuiElement {
         TFT_eSprite *_buffer;
 
         int _x, _y, _width, _height, _cols, _rows;
+        bool _shouldRedraw = true;
 
         static const unsigned int _charWidth = 6;
         static const unsigned int _charHeight = 9;

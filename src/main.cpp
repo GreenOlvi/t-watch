@@ -122,7 +122,7 @@ void gui_loop() {
         debug->draw()->pushSprite(0, 80);
         drawStatusBar();
 
-        _nextGuiUpdate += 1000;
+        _nextGuiUpdate += 100;
     }
 }
 

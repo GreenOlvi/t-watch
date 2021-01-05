@@ -10,9 +10,14 @@ void TimeWidget::setup(TFT_eSPI *tft) {
 }
 
 TFT_eSprite* TimeWidget::draw() {
+    if (millis() - _lastRedraw < 1000) {
+        return _buffer;
+    }
+
     _buffer->fillSprite(TFT_BLACK);
     _buffer->setTextFont(7);
     _buffer->setTextColor(TFT_GREENYELLOW, TFT_BLACK);
     _buffer->drawCentreString(_ttgo->rtc->formatDateTime(), 120, 0, 7);
+    _lastRedraw = millis();
     return _buffer;
 }

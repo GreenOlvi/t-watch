@@ -15,7 +15,15 @@ DebugWindow::DebugWindow(unsigned int cols, unsigned int rows)
     _curY = 0;
 }
 
+void DebugWindow::onChange(DebugWindowEventHandler changeHandler) {
+    _changeHandler = changeHandler;
+}
+
 size_t DebugWindow::write(uint8_t chr) {
+    if (_changeHandler) {
+        _changeHandler();
+    }
+
     if (chr == '\r') return 1;
 
     if (chr == '\n') {
