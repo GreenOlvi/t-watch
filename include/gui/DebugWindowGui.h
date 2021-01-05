@@ -3,17 +3,16 @@
 
 #include "config.h"
 #include <Print.h>
-#include <TTGO.h>
+#include "Drawable.h"
 #include "DebugWindow.h"
 
-class DebugWindowGui : public Print {
+class DebugWindowGui : public Print, public Drawable {
     public:
-        DebugWindowGui(TTGOClass *ttgo, int x, int y, int width, int height);
-        void draw();
+        DebugWindowGui(int x, int y, int width, int height);
+        void draw(TFT_eSPI *tft) override;
         size_t write(uint8_t) override;
 
     private:
-        TTGOClass *_ttgo;
         DebugWindow *_debug;
 
         int _x, _y, _width, _height, _cols, _rows;

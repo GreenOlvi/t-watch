@@ -7,6 +7,7 @@
 #include "MqttModule.h"
 
 #include "gui/DebugWindowGui.h"
+#include "gui/ButtonGui.h"
 
 TTGOClass *ttgo;
 TFT_eSPI *tft;
@@ -23,11 +24,44 @@ MotorModule motor(MOTOR_PIN);
 
 MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
+ButtonGui b1 = ButtonGui(10, 180, 60, 40, "WiFi");
+ButtonGui b2 = ButtonGui(90, 180, 60, 40, "Mqtt");
+ButtonGui b3 = ButtonGui(170, 180, 60, 40, "Lamp");
+
 char buf[128];
 double lps = .0;
 
 void publishCommand() {
     mqtt.publish(TASMOTA_TOPIC, "TOGGLE");
+}
+
+bool wifiState = true;
+bool mqttState = true;
+
+void checkButtonsPressed(int x, int y)
+{
+    if (b1.isInside(x, y)) {
+        motor.shortVibe();
+        wifiState = !wifiState;
+        if (wifiState) {
+            wifi.connect();
+        } else {
+            wifi.disconnect();
+        }
+    }
+    if (b2.isInside(x, y)) {
+        motor.shortVibe();
+        mqttState = !mqttState;
+        if (mqttState) {
+            mqtt.connect();
+        } else {
+            mqtt.disconnect();
+        }
+    }
+    if (b3.isInside(x, y)) {
+        motor.shortVibe();
+        publishCommand();
+    }
 }
 
 void setup() {
@@ -38,27 +72,18 @@ void setup() {
     ttgo->openBL();
     tft = ttgo->tft;
 
-    debug = new DebugWindowGui(ttgo, 0, 120, 240, 120);
+    debug = new DebugWindowGui(0, 80, 240, 84);
+
     wifi.debug = debug;
     wifi.setup();
+    if (wifiState) {
+        wifi.connect();
+    }
 
-    wifi.onStart([](WiFiClass *wifi) { debug->println("WiFi started"); });
-    wifi.onStop([](WiFiClass *wifi) { debug->println("WiFi stopped"); });
-    wifi.onDisconnect([](WiFiClass *wifi) { debug->println("WiFi disconnected"); });
-
-    wifi.onConnect([](WiFiClass *wifi) {
-        debug->print("Connected to ");
-        debug->println(wifi->SSID());
-        debug->print("IP: ");
-        debug->println(wifi->localIP().toString());
-    });
-
-    wifi.connect();
     motor.setup();
-    motor.vibe(100);
 
     touch.setup();
-    touch.onTouch([](TP_Point point) {
+    touch.onTouch([](word x, word y) {
         motor.shortVibe();
         debug->printf("Touched at [%d,%d]\n", x, y);
         // publishCommand();
@@ -68,7 +93,9 @@ void setup() {
 
     mqtt.debug = debug;
     mqtt.setup();
-    mqtt.connect();
+    if (mqttState) {
+        mqtt.connect();
+    }
 
     mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
         debug->print("Message on [");
@@ -79,6 +106,8 @@ void setup() {
         }
         debug->println();
     });
+
+    motor.vibe(100);
 }
 
 void drawTime()
@@ -123,7 +152,10 @@ unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
     if (millis() > _nextGuiUpdate) {
         drawTime();
-        debug->draw();
+        debug->draw(tft);
+        b1.draw(tft);
+        b2.draw(tft);
+        b3.draw(tft);
         drawStatusBar();
 
         _nextGuiUpdate += 1000;
@@ -132,7 +164,8 @@ void gui_loop() {
 
 bool isStandby = false;
 
-void onButtonPress() {
+void onButtonPress()
+{
     if (!isStandby) {
         isStandby = true;
 
@@ -140,6 +173,9 @@ void onButtonPress() {
         ttgo->bl->adjust(0);
         ttgo->displaySleep();
         ttgo->closeBL();
+
+        mqtt.disconnect();
+        wifi.disconnect();
 
         gpio_wakeup_enable((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
         esp_sleep_enable_gpio_wakeup();
@@ -151,6 +187,14 @@ void onButtonPress() {
         ttgo->openBL();
         ttgo->displayWakeup();
         ttgo->bl->adjust(30);
+
+        if (wifiState) {
+            wifi.connect();
+        }
+
+        if (mqttState) {
+            mqtt.connect();
+        }
     }
 }
 
@@ -198,10 +242,10 @@ void lpsUpdate()
 void loop() {
     loops++;
     pmuLoop();
-        wifi.update(millis());
+    wifi.update(millis());
     mqtt.update(millis());
-        touch.update(millis());
-        gui_loop();
-        time_sync_loop();
+    touch.update(millis());
+    gui_loop();
+    time_sync_loop();
     lpsUpdate();
 }
