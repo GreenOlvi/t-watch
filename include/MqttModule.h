@@ -5,7 +5,6 @@
 #include "Module.h"
 #include "WiFiModule.h"
 #include <PubSubClient.h>
-#include <ESPmDNS.h>
 #include <math.h>
 
 typedef std::function<void(char*, uint8_t*, unsigned int)> CallbackFn;
