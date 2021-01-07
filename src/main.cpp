@@ -7,7 +7,8 @@
 #include "MqttModule.h"
 
 #include "gui/DebugWindowGui.h"
-#include "gui/TimeWidget.h"
+#include "gui/StatusBar.h"
+#include "gui/ClockFrame.h"
 
 TTGOClass *ttgo;
 TFT_eSPI *tft;
@@ -23,7 +24,8 @@ MotorModule motor(MOTOR_PIN);
 MqttModule mqtt(&wifi, HOSTNAME, MQTT_HOST);
 
 DebugWindowGui *debug;
-TimeWidget *timeWidget;
+ClockFrame *clockFrame;
+StatusBar *statusBar;
 
 char buf[128];
 double lps = .0;
@@ -35,95 +37,18 @@ void publishCommand() {
 bool wifiState = true;
 bool mqttState = true;
 
-void setup() {
-    Serial.begin(115200);
+void guiSetup() {
+    statusBar = new StatusBar(ttgo, &wifi, &mqtt);
+    statusBar->setup(tft);
 
-    ttgo = TTGOClass::getWatch();
-    ttgo->begin();
-    ttgo->openBL();
-    tft = ttgo->tft;
-
-    debug = new DebugWindowGui(0, 80, 240, 84);
-    debug->setup(tft);
-
-    wifi.debug = debug;
-    wifi.setup();
-    if (wifiState) {
-        wifi.connect();
-    }
-
-    motor.setup();
-
-    ttgo->bl->adjust(30);
-
-    mqtt.debug = debug;
-    mqtt.setup();
-    if (mqttState) {
-        mqtt.connect();
-    }
-
-    mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
-        debug->print("Message on [");
-        debug->print(topic);
-        debug->print("] ");
-        for (int i=0;i<length;i++) {
-            debug->print((char)data[i]);
-        }
-        debug->println();
-    });
-
-    touch.setup();
-    touch.onTouch([](word x, word y) {
-        motor.shortVibe();
-        debug->printf("Touched at [%d,%d]\n", x, y);
-    });
-
-    timeWidget = new TimeWidget(ttgo);
-    timeWidget->setup(tft);
-
-    motor.vibe(100);
+    clockFrame = new ClockFrame(ttgo, statusBar);
+    clockFrame->setup(tft);
 }
 
-void drawBatteryState() {
-    tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    sprintf(buf, "%.2fV", ttgo->power->getBattVoltage() / 1000.0);
-    auto width = tft->textWidth(buf);
-    tft->drawString(buf, TFT_WIDTH - width, 0, 1);
-}
-
-void drawStatusBar() {
-    tft->fillRect(0, 0, 30, 10, TFT_BLACK);
-
-    if (WiFi.isConnected()) {
-        tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    } else {
-        tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-    }
-    tft->drawChar('W', 0, 0, 1);
-
-    if (mqtt.isConnected()) {
-        tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    } else {
-        tft->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-    }
-    tft->drawChar('M', 10, 0, 1);
-
-    snprintf(buf, sizeof(buf), "%.2flps", lps);
-    tft->setTextColor(TFT_GREEN, TFT_BLACK);
-    tft->drawString(buf, 30, 0, 1);
-
-    drawBatteryState();
-}
-
-unsigned long _nextGuiUpdate = 0;
+// unsigned long _nextGuiUpdate = 0;
 void gui_loop() {
-    if (millis() > _nextGuiUpdate) {
-        timeWidget->draw()->pushSprite(5, 20);
-        debug->draw()->pushSprite(0, 80);
-        drawStatusBar();
-
-        _nextGuiUpdate += 100;
-    }
+    clockFrame->update(millis());
+    clockFrame->draw();
 }
 
 bool isStandby = false;
@@ -150,7 +75,7 @@ void onButtonPress()
         debug->println("Waking up...");
         ttgo->openBL();
         ttgo->displayWakeup();
-        ttgo->bl->adjust(30);
+        ttgo->bl->adjust(defaultBg);
 
         if (wifiState) {
             wifi.connect();
@@ -201,6 +126,54 @@ void lpsUpdate()
         _lastLpsUpdate = millis();
         _nextLpsUpdate = _lastLpsUpdate + 2000;
     }
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    ttgo = TTGOClass::getWatch();
+    ttgo->begin();
+    ttgo->openBL();
+    tft = ttgo->tft;
+
+    debug = new DebugWindowGui(0, 80, 240, 84);
+    debug->setup(tft);
+
+    wifi.debug = debug;
+    wifi.setup();
+    if (wifiState) {
+        wifi.connect();
+    }
+
+    motor.setup();
+
+    ttgo->bl->adjust(defaultBg);
+
+    mqtt.debug = debug;
+    mqtt.setup();
+    if (mqttState) {
+        mqtt.connect();
+    }
+
+    mqtt.subscribe("env/office/temp_in", [] (char *topic, uint8_t *data, unsigned int length) {
+        debug->print("Message on [");
+        debug->print(topic);
+        debug->print("] ");
+        for (int i=0;i<length;i++) {
+            debug->print((char)data[i]);
+        }
+        debug->println();
+    });
+
+    touch.setup();
+    touch.onTouch([](word x, word y) {
+        motor.shortVibe();
+        debug->printf("Touched at [%d,%d]\n", x, y);
+    });
+
+    guiSetup();
+
+    motor.vibe(100);
 }
 
 void loop() {

@@ -40,5 +40,6 @@ TFT_eSprite* DebugWindowGui::draw() {
     }
 
     _buffer->drawRect(0, 0, _width-1, _height-1, TFT_DARKGREEN);
+    _shouldRedraw = false;
     return _buffer;
 }
