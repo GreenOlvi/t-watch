@@ -9,7 +9,8 @@ class StatusBar : public GuiElement {
         StatusBar(WatchClass *watch);
         void setup(TFT_eSPI *tft) override;
         void update(const unsigned long t);
-        TFT_eSprite *draw() override;
+        TFT_eSprite *draw(void) override;
+        void unload(void) override;
         bool shouldRedraw();
 
         const int height = 10;

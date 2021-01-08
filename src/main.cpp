@@ -1,29 +1,71 @@
 #include <Arduino.h>
 
-#include "gui/DebugWindowGui.h"
+#include "gui/Frame.h"
 #include "gui/StatusBar.h"
 #include "gui/ClockFrame.h"
+#include "gui/MenuFrame.h"
 
 #include "WatchClass.h"
 
 WatchClass *watch;
 
-ClockFrame *clockFrame;
 StatusBar *statusBar;
+ClockFrame *clockFrame;
+MenuFrame *menuFrame;
+
+Frame *currentFrame;
+
+int frame = 0;
+int nextFrame = -1;
+
+void replaceCurrentFrame(int newFrame) {
+    currentFrame->unload();
+
+    switch (newFrame) {
+        case 0:
+            currentFrame = clockFrame;
+            break;
+        case 1:
+            currentFrame = menuFrame;
+            break;
+    };
+
+    frame = newFrame;
+    currentFrame->setup(watch->tft);
+}
+
+void switchFrame(int newFrame) {
+    nextFrame = newFrame;
+}
+
+void handleTouch(word x, word y) {
+    if (frame == 0) {
+        switchFrame(1);
+    }
+    else if (frame == 1) {
+        switchFrame(0);
+    }
+}
 
 void guiSetup() {
-    Serial.println("statusBar");
     statusBar = new StatusBar(watch);
     statusBar->setup(watch->tft);
 
-    Serial.println("clockFrame");
     clockFrame = new ClockFrame(watch, statusBar);
-    clockFrame->setup(watch->tft);
+
+    menuFrame = new MenuFrame(statusBar);
+
+    currentFrame = clockFrame;
+    currentFrame->setup(watch->tft);
 }
 
 void guiLoop() {
-    clockFrame->update(millis());
-    clockFrame->draw();
+    if (nextFrame >= 0) {
+        replaceCurrentFrame(nextFrame);
+        nextFrame = -1;
+    }
+    currentFrame->update(millis());
+    currentFrame->draw();
 }
 
 void setup() {
@@ -31,6 +73,8 @@ void setup() {
 
     watch = new WatchClass();
     watch->setup();
+
+    watch->touch->onTouch(handleTouch);
 
     guiSetup();
 }

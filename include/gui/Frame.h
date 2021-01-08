@@ -8,6 +8,7 @@ class Frame {
         virtual void setup(TFT_eSPI *tft) = 0;
         virtual void draw(void) = 0;
         virtual void update(const unsigned long t) = 0;
+        virtual void unload(void) = 0;
 };
 
 #endif

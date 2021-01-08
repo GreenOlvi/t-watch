@@ -43,3 +43,7 @@ void ClockFrame::update(const unsigned long t) {
 
     _nextCheck = t + 100;
 }
+
+void ClockFrame::unload() {
+    _buff->deleteSprite();
+}

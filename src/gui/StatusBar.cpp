@@ -53,3 +53,7 @@ TFT_eSprite* StatusBar::draw() {
 bool StatusBar::shouldRedraw() {
     return _shouldRedraw;
 }
+
+void StatusBar::unload() {
+    _buffer->deleteSprite();
+}

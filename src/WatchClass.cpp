@@ -7,8 +7,6 @@ void WatchClass::setup() {
     ttgo->begin();
     ttgo->openBL();
 
-    ttgo->bl->adjust(30);
-
     tft = ttgo->tft;
 
     debug = new DebugWindow(40, 40);
@@ -27,10 +25,8 @@ void WatchClass::setup() {
     touch = new TouchModule();
     touch->setup();
 
-    touch->onTouch([this](word x, word y) {
-        motor->shortVibe();
-        debug->printf("Touched at [%d,%d]\n", x, y);
-    });
+    // TODO Store config
+    ttgo->bl->adjust(30);
 
     if (_wifiState) {
         wifi->connect();
@@ -40,6 +36,7 @@ void WatchClass::setup() {
         mqtt->connect();
     }
 
+    // FIXME Crashing when not subscribed to any topic
     mqtt->subscribe("env/office/temp_in", [this] (char *topic, uint8_t *data, unsigned int length) {
         debug->print("Message on [");
         debug->print(topic);

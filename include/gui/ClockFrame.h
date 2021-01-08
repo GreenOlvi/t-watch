@@ -11,6 +11,7 @@ class ClockFrame : public Frame {
         void setup(TFT_eSPI *tft) override;
         void draw(void) override;
         void update(const unsigned long t) override;
+        void unload(void) override;
 
     private:
         WatchClass *_watch;
