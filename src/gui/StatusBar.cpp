@@ -1,19 +1,12 @@
 #include "gui/StatusBar.h"
 
-StatusBar::StatusBar(TTGOClass *ttgo, WiFiModule *wifi, MqttModule *mqtt)
-    : _ttgo(ttgo), _wifi(wifi), _mqtt(mqtt) {
+StatusBar::StatusBar(WatchClass *watch)
+    : _watch(watch) {
 }
 
 void StatusBar::setup(TFT_eSPI *tft) {
     _buffer = new TFT_eSprite(tft);
     _buffer->createSprite(240, 10);
-
-    if (!_wifi) {
-        Serial.println("wifi");
-    }
-    if (!_mqtt) {
-        Serial.println("mqtt");
-    }
 }
 
 void StatusBar::update(const unsigned long t) {
@@ -27,14 +20,14 @@ TFT_eSprite* StatusBar::draw() {
     _buffer->fillSprite(TFT_BLACK);
     _buffer->setTextFont(1);
 
-    if (_wifi->isConnected()) {
+    if (_watch->wifi->isConnected()) {
         _buffer->setTextColor(TFT_GREEN);
     } else {
         _buffer->setTextColor(TFT_LIGHTGREY);
     }
     _buffer->drawChar('W', 0, 0, 1);
 
-    if (_mqtt->isConnected()) {
+    if (_watch->mqtt->isConnected()) {
         _buffer->setTextColor(TFT_GREEN);
     } else {
         _buffer->setTextColor(TFT_LIGHTGREY);
@@ -43,12 +36,12 @@ TFT_eSprite* StatusBar::draw() {
 
     char buf[20];
 
-    // snprintf(buf, sizeof(buf), "%.2f lps", lps);
+    snprintf(buf, sizeof(buf), "%.2f lps", _watch->loopsPerSecond);
     _buffer->setTextColor(TFT_GREEN);
-    _buffer->drawString("xxx lps", 30, 0, 1);
+    _buffer->drawString(buf, 30, 0, 1);
 
     _buffer->setTextColor(TFT_GREEN);
-    sprintf(buf, "%.2fV", _ttgo->power->getBattVoltage() / 1000.0);
+    sprintf(buf, "%.2fV", _watch->ttgo->power->getBattVoltage() / 1000.0);
     auto width = _buffer->textWidth(buf);
     _buffer->drawString(buf, TFT_WIDTH - width, 0, 1);
 

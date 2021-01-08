@@ -3,16 +3,17 @@
 
 #include "Frame.h"
 #include "StatusBar.h"
+#include "WatchClass.h"
 
 class ClockFrame : public Frame {
     public:
-        ClockFrame(TTGOClass *ttgo, StatusBar *statusBar);
+        ClockFrame(WatchClass *watch, StatusBar *_statusBar);
         void setup(TFT_eSPI *tft) override;
         void draw(void) override;
         void update(const unsigned long t) override;
 
     private:
-        TTGOClass *_ttgo;
+        WatchClass *_watch;
         TFT_eSprite *_buff;
         StatusBar *_statusBar;
 

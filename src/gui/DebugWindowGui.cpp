@@ -11,7 +11,6 @@ DebugWindowGui::DebugWindowGui(int x, int y, int width, int height)
 }
 
 size_t DebugWindowGui::write(uint8_t chr) {
-    Serial.write(chr);
     return _debug->write(chr);
 }
 

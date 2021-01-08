@@ -24,6 +24,8 @@ size_t DebugWindow::write(uint8_t chr) {
         _changeHandler();
     }
 
+    Serial.write(chr);
+
     if (chr == '\r') return 1;
 
     if (chr == '\n') {
