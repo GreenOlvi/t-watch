@@ -11,6 +11,10 @@ void WatchClass::setup() {
 
     debug = new DebugWindow(40, 40);
 
+    power = new PowerModule(ttgo->power);
+    power->setup();
+    power->onButtonShortPress([this]() { onButtonPress(); });
+
     wifi = new WiFiModule(HOSTNAME, STASSID, STAPSK);
     wifi->debug = debug;
     wifi->setup();
@@ -50,7 +54,7 @@ void WatchClass::setup() {
 
 void WatchClass::update() {
     unsigned long const t = millis();
-    pmuLoop();
+    power->update(t);
     wifi->update(t);
     mqtt->update(t);
     touch->update(t);
@@ -98,14 +102,6 @@ void WatchClass::onButtonPress()
             mqtt->connect();
         }
     }
-}
-
-void WatchClass::pmuLoop() {
-    ttgo->power->readIRQ();
-    if (ttgo->power->isPEKShortPressIRQ()) {
-        onButtonPress();
-    }
-    ttgo->power->clearIRQ();
 }
 
 void WatchClass::timeSynchLoop() {

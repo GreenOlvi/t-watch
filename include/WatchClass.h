@@ -4,6 +4,7 @@
 #include "config.h"
 #include "common.h"
 #include "secrets.h"
+#include "PowerModule.h"
 #include "WiFiModule.h"
 #include "MqttModule.h"
 #include "MotorModule.h"
@@ -20,6 +21,7 @@ class WatchClass {
 
         TTGOClass *ttgo;
         TFT_eSPI *tft;
+        PowerModule *power;
         WiFiModule *wifi;
         MqttModule *mqtt;
         MotorModule *motor;
