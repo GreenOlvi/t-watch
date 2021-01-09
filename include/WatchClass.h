@@ -2,6 +2,7 @@
 #define WatchClass_h
 
 #include "config.h"
+#include "common.h"
 #include "secrets.h"
 #include "WiFiModule.h"
 #include "MqttModule.h"
@@ -14,6 +15,8 @@ class WatchClass {
         WatchClass(void);
         void setup(void);
         void update(void);
+
+        bool isStandby();
 
         TTGOClass *ttgo;
         TFT_eSPI *tft;

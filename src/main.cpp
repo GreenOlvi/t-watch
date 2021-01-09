@@ -38,7 +38,7 @@ void switchFrame(int newFrame) {
     nextFrame = newFrame;
 }
 
-void handleTouch(word x, word y) {
+void handleTouch(point_t p) {
     if (frame == 0) {
         switchFrame(1);
     }
@@ -59,13 +59,22 @@ void guiSetup() {
     currentFrame->setup(watch->tft);
 }
 
+unsigned long _nextDraw = 0;
+
 void guiLoop() {
     if (nextFrame >= 0) {
         replaceCurrentFrame(nextFrame);
         nextFrame = -1;
     }
-    currentFrame->update(millis());
-    currentFrame->draw();
+
+    const unsigned long t = millis();
+
+    currentFrame->update(t);
+
+    if (t >= _nextDraw) {
+        currentFrame->draw();
+        _nextDraw = t + 50;
+    }
 }
 
 void setup() {
@@ -81,5 +90,7 @@ void setup() {
 
 void loop() {
     watch->update();
-    guiLoop();
+    if (!watch->isStandby()) {
+        guiLoop();
+    }
 }

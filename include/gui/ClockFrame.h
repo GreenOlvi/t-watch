@@ -12,6 +12,7 @@ class ClockFrame : public Frame {
         void draw(void) override;
         void update(const unsigned long t) override;
         void unload(void) override;
+        void onTouch(point_t p) override;
 
     private:
         WatchClass *_watch;

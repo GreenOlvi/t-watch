@@ -58,10 +58,16 @@ void WatchClass::update() {
     lpsUpdate();
 }
 
+bool WatchClass::isStandby() {
+    return _isStandby;
+}
+
 void WatchClass::onButtonPress()
 {
     if (!_isStandby) {
         _isStandby = true;
+
+        touch->disable();
 
         debug->println("Going to sleep...");
         ttgo->bl->adjust(0);
@@ -81,6 +87,8 @@ void WatchClass::onButtonPress()
         ttgo->openBL();
         ttgo->displayWakeup();
         ttgo->bl->adjust(30);
+
+        touch->enable();
 
         if (_wifiState) {
             wifi->connect();

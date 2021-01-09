@@ -47,3 +47,6 @@ void ClockFrame::update(const unsigned long t) {
 void ClockFrame::unload() {
     _buff->deleteSprite();
 }
+
+void ClockFrame::onTouch(point_t p) {
+}

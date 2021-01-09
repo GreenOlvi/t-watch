@@ -1,10 +1,10 @@
 #ifndef TouchModule_h
 #define TouchModule_h
 
-#include "config.h"
+#include "common.h"
 #include "Module.h"
 
-typedef std::function<void(int16_t x, int16_t y)> TouchModuleEvent;
+typedef std::function<void(point_t)> TouchModuleEvent;
 
 class TouchModule : public Module {
     public:
@@ -15,8 +15,13 @@ class TouchModule : public Module {
         bool isTouching(void);
 
         void onTouch(TouchModuleEvent event);
+
+        void enable();
+        void disable();
+
     private:
         TTGOClass *_ttgo;
+        bool _enabled;
         unsigned int _updateDelay = 50;
         unsigned long _nextUpdate = 0;
         bool _isTouched = false;

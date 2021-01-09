@@ -30,3 +30,6 @@ void MenuFrame::unload() {
     _bg->deleteSprite();
     _drawBg = true;
 }
+
+void MenuFrame::onTouch(point_t p) {
+}

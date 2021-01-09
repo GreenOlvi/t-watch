@@ -13,6 +13,7 @@ class MenuFrame : public Frame {
         void draw(void) override;
         void update(const unsigned long t) override;
         void unload(void) override;
+        void onTouch(point_t p) override;
 
     private:
         TFT_eSprite *_bg;
