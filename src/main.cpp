@@ -9,6 +9,8 @@
 
 WatchClass *watch;
 
+TaskHandle_t GuiTask;
+
 StatusBar *statusBar;
 ClockFrame *clockFrame;
 MenuFrame *menuFrame;
@@ -62,7 +64,11 @@ void guiSetup() {
 unsigned long _nextDraw = 0;
 
 void guiLoop() {
-    if (nextFrame >= 0) {
+    if (watch->isStandby())
+        return;
+
+    if (nextFrame >= 0)
+    {
         replaceCurrentFrame(nextFrame);
         nextFrame = -1;
     }
@@ -77,6 +83,12 @@ void guiLoop() {
     }
 }
 
+void GuiTaskCode(void *param) {
+    while (1) {
+        guiLoop();
+    }
+}
+
 void setup() {
     Serial.begin(115200);
 
@@ -86,11 +98,10 @@ void setup() {
     watch->touch->onTouch(handleTouch);
 
     guiSetup();
+
+    xTaskCreatePinnedToCore(GuiTaskCode, "GuiTask", 10000, NULL, 0, &GuiTask, 0);
 }
 
 void loop() {
     watch->update();
-    if (!watch->isStandby()) {
-        guiLoop();
-    }
 }
