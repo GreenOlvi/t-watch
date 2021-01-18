@@ -5,18 +5,21 @@
 #include "Module.h"
 #include "WatchClass.h"
 
+class Gui;
+
+#include "FrameManager.h"
 #include "gui/Frame.h"
-#include "gui/StatusBar.h"
 #include "gui/ClockFrame.h"
 #include "gui/MenuFrame.h"
+#include "gui/StatusBar.h"
 
-class Gui : public Module {
+class Gui : public Module, FrameManager {
     public:
         Gui(WatchClass *watch);
         void setup(void) override;
         void update(const unsigned long t) override;
 
-        void switchFrame(int newFrame);
+        void switchFrame(int newFrame) override;
         void handleTouch(point_t p);
 
     private:

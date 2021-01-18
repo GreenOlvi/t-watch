@@ -2,8 +2,9 @@
 
 #define DATES_EQUAL(a, b) (a.second == b.second && a.minute == b.minute && a.hour == b.hour && a.day == b.day && a.month == b.month && a.year == b.year)
 
-ClockFrame::ClockFrame(WatchClass *watch, StatusBar *statusBar) 
-    : _watch(watch), _statusBar(statusBar) {
+ClockFrame::ClockFrame(FrameManager *fm, WatchClass *watch, StatusBar *statusBar)
+    : Frame(fm), _watch(watch), _statusBar(statusBar)
+{
 }
 
 void ClockFrame::setup(TFT_eSPI *tft) {
@@ -49,4 +50,5 @@ void ClockFrame::unload() {
 }
 
 void ClockFrame::onTouch(point_t p) {
+    _fm->switchFrame(1);
 }

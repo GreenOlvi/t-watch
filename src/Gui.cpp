@@ -8,9 +8,9 @@ void Gui::setup() {
     _statusBar = new StatusBar(_watch);
     _statusBar->setup(_tft);
 
-    _clockFrame = new ClockFrame(_watch, _statusBar);
+    _clockFrame = new ClockFrame(this, _watch, _statusBar);
 
-    _menuFrame = new MenuFrame(_statusBar);
+    _menuFrame = new MenuFrame(this, _watch, _statusBar);
 
     _currentFrame = _clockFrame;
     _currentFrame->setup(_tft);
@@ -55,10 +55,5 @@ void Gui::switchFrame(int newFrame) {
 }
 
 void Gui::handleTouch(point_t p) {
-    if (_frame == 0) {
-        switchFrame(1);
-    }
-    else if (_frame == 1) {
-        switchFrame(0);
-    }
+    _currentFrame->onTouch(p);
 }

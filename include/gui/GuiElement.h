@@ -1,7 +1,7 @@
 #ifndef GuiElement_h
 #define GuiElement_h
 
-#include "config.h"
+#include "common.h"
 
 class GuiElement {
     public:

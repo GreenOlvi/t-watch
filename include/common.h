@@ -8,4 +8,13 @@ struct point_t {
     int y;
 };
 
+struct rect_t {
+    int x;
+    int y;
+    int w;
+    int h;
+};
+
+bool isInside(rect_t r, point_t p);
+
 #endif

@@ -3,11 +3,10 @@
 
 #include "Frame.h"
 #include "StatusBar.h"
-#include "WatchClass.h"
 
 class ClockFrame : public Frame {
     public:
-        ClockFrame(WatchClass *watch, StatusBar *_statusBar);
+        ClockFrame(FrameManager *fm, WatchClass *watch, StatusBar *_statusBar);
         void setup(TFT_eSPI *tft) override;
         void draw(void) override;
         void update(const unsigned long t) override;
