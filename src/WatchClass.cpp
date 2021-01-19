@@ -1,11 +1,12 @@
 #include "WatchClass.h"
 
+static const char *TAG = "WatchClass";
+
 WatchClass::WatchClass() {}
 
 void WatchClass::setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
-    ttgo->openBL();
 
     tft = ttgo->tft;
 
@@ -30,8 +31,6 @@ void WatchClass::setup() {
     touch->setup();
 
     // TODO Store config
-    ttgo->bl->adjust(30);
-
     if (_wifiState) {
         wifi->connect();
     }
@@ -41,15 +40,16 @@ void WatchClass::setup() {
     }
 
     // FIXME Crashing when not subscribed to any topic
-    mqtt->subscribe("env/office/temp_in", [this] (char *topic, uint8_t *data, unsigned int length) {
-        debug->print("Message on [");
-        debug->print(topic);
-        debug->print("] ");
-        for (int i=0;i<length;i++) {
-            debug->print((char)data[i]);
-        }
-        debug->println();
+    mqtt->subscribe("env/office/temp_in", [this](char *topic, uint8_t *data, unsigned int length) {
+        auto s = new char[length + 1];
+        memcpy(s, data, length);
+        s[length] = 0;
+        ESP_LOGD(TAG, "Message on [%s] %s", topic, s);
     });
+
+    ttgo->openBL();
+    delay(5);
+    ttgo->setBrightness(30);
 }
 
 void WatchClass::update() {
@@ -69,38 +69,48 @@ bool WatchClass::isStandby() {
 void WatchClass::onButtonPress()
 {
     if (!_isStandby) {
-        _isStandby = true;
-
-        touch->disable();
-
-        debug->println("Going to sleep...");
-        ttgo->bl->adjust(0);
-        ttgo->displaySleep();
-        ttgo->closeBL();
-
-        mqtt->disconnect();
-        wifi->disconnect();
-
-        gpio_wakeup_enable((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
-        esp_sleep_enable_gpio_wakeup();
-        esp_light_sleep_start();
+        lightSleep();
     } else {
-        _isStandby = false;
+        wakeUp();
+    }
+}
 
-        debug->println("Waking up...");
-        ttgo->openBL();
-        ttgo->displayWakeup();
-        ttgo->bl->adjust(30);
+void WatchClass::lightSleep() {
+    _isStandby = true;
 
-        touch->enable();
+    ESP_LOGI(TAG, "Going to light sleep...");
 
-        if (_wifiState) {
-            wifi->connect();
-        }
+    touch->disable();
 
-        if (_mqttState) {
-            mqtt->connect();
-        }
+    ttgo->closeBL();
+    ttgo->displaySleep();
+
+    wifi->disconnect();
+
+    // setCpuFrequencyMhz(10);
+    gpio_wakeup_enable((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
+    esp_sleep_enable_gpio_wakeup();
+    esp_light_sleep_start();
+}
+
+void WatchClass::wakeUp() {
+    _isStandby = false;
+
+    ESP_LOGI(TAG, "Waking up...");
+    // setCpuFrequencyMhz(160);
+
+    ttgo->displayWakeup();
+    ttgo->openBL();
+    ttgo->bl->adjust(30);
+
+    touch->enable();
+
+    if (_wifiState) {
+        wifi->connect();
+    }
+
+    if (_mqttState) {
+        mqtt->connect();
     }
 }
 
@@ -124,7 +134,6 @@ void WatchClass::lpsUpdate()
     loops++;
     if (millis() > _nextLpsUpdate) {
         loopsPerSecond = (loops / (millis() - _lastLpsUpdate + .0))*1000;
-        // Serial.printf("%.2f lps\n", lps);
         loops = 0;
         _lastLpsUpdate = millis();
         _nextLpsUpdate = _lastLpsUpdate + 2000;

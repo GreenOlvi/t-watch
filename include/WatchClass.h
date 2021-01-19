@@ -10,12 +10,16 @@
 #include "MotorModule.h"
 #include "TouchModule.h"
 #include "DebugWindow.h"
+#include "esp_sleep.h"
 
 class WatchClass {
     public:
         WatchClass(void);
         void setup(void);
         void update(void);
+
+        void lightSleep();
+        void wakeUp();
 
         bool isStandby();
 
