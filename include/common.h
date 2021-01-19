@@ -16,5 +16,7 @@ struct rect_t {
 };
 
 bool isInside(rect_t r, point_t p);
+rect_t rectFromAbsolute(int x1, int y1, int x2, int y2);
+point_t rectGetCentre(rect_t r);
 
 #endif

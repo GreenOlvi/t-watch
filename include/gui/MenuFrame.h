@@ -23,8 +23,12 @@ class MenuFrame : public Frame {
 
         bool _drawBg = true;
 
+        rect_t _closeButton;
         rect_t *_buttons;
         int _buttonCount;
+
+        void drawButtons();
+        void drawButton(int i, rect_t rect);
 
         bool buttonPressed(point_t p, int &button);
 
