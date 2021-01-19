@@ -17,6 +17,8 @@ class MenuFrame : public Frame {
         void onTouch(point_t p) override;
 
     private:
+        static constexpr const char *TAG = "MenuFrame";
+
         WatchClass *_watch;
         TFT_eSprite *_bg;
         StatusBar *_statusBar;

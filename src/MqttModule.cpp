@@ -16,41 +16,53 @@ MqttModule::MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAdd
 }
 
 void MqttModule::setup() {
-    _client.setCallback([this] (char *topic, uint8_t *data, unsigned int length) {
+    _client.setCallback([this](char *topic, uint8_t *data, unsigned int length) {
         this->callback(topic, data, length);
     });
 }
 
 void MqttModule::update(const unsigned long t) {
-    if (!_client.connected()) {
-        if (_stayConnected && t > _nextRetry) {
-            if (reconnect()) {
-                debug->println("MQTT connected");
-                _retryCount = 0;
-            } else if (!_wifi->isConnected()) {
-                debug->println("MQTT waiting for WiFi to connect");
-                _nextRetry = -1;
-                _wifi->onConnect([this](WiFiClass *wifi) { this->_nextRetry = millis(); });
-            } else {
-                unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
-                debug->printf("MQTT connection failed. Waiting %d seconds\n", sec);
-                _retryCount++;
-                _nextRetry = t + sec * 1000;
+    if (t >= _nextUpdate) {
+        _nextUpdate = t + 1000;
+        if (!_client.connected()) {
+            if (_stayConnected && t > _nextRetry) {
+                if (reconnect()) {
+                    ESP_LOGD(TAG, "MQTT connected");
+                    _retryCount = 0;
+                } else if (!_wifi->isConnected()) {
+                    ESP_LOGD(TAG, "MQTT waiting for WiFi to connect");
+                    _nextRetry = -1;
+                    _wifi->onConnect([this](WiFiClass *wifi) { this->_nextRetry = millis(); });
+                } else {
+                    unsigned int sec = _retryCount < 12 ? pow(2, _retryCount) : 4096;
+                    ESP_LOGW(TAG, "MQTT connection failed. Waiting %d seconds\n", sec);
+                    _retryCount++;
+                    _nextRetry = t + sec * 1000;
+                }
             }
         }
-    } else {
-        if (_stayConnected) {
-            _client.loop();
-        } else {
-            _client.disconnect();
+        else
+        {
+            if (_stayConnected) {
+                _client.loop();
+            } else {
+                _client.disconnect();
+            }
         }
     }
 }
 
-void MqttModule::publish(const char *topic, const char *payload) {
-    if (_client.connected()) {
-        _client.publish(topic, payload);
-    }
+bool MqttModule::publish(const char *topic, const char *payload) {
+    ESP_LOGV(TAG, "Mqtt publish");
+
+    if (_client.connected())
+    {
+        ESP_LOGI(TAG, "Mqtt publishing to '%s' [%s]\n", topic, payload);
+        return _client.publish(topic, payload);
+    } 
+
+    ESP_LOGW(TAG, "Mqtt client not connected\n");
+    return false;
 }
 
 void MqttModule::connect() {
@@ -77,10 +89,10 @@ bool MqttModule::reconnect() {
     if (_wifi->isConnected()) {
         if (!_ip) {
             if (!resolveHostname()) {
-                debug->println("Mqtt broker hostname not resolved");
+                ESP_LOGE(TAG, "Mqtt broker hostname not resolved");
                 return false;
             }
-            debug->println("Mqtt broker hostname resolved");
+            ESP_LOGV(TAG, "Mqtt broker hostname resolved");
             _client.setServer(_ip, _port);
         }
 

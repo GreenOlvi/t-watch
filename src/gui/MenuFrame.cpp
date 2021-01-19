@@ -1,7 +1,5 @@
 #include "gui/MenuFrame.h"
 
-static const char *TAG = "MenuFrame";
-
 MenuFrame::MenuFrame(FrameManager *fm, WatchClass *watch, StatusBar *statusBar) 
     : Frame(fm), _watch(watch), _statusBar(statusBar) {
 }

@@ -9,7 +9,6 @@
 #include "MqttModule.h"
 #include "MotorModule.h"
 #include "TouchModule.h"
-#include "DebugWindow.h"
 #include "esp_sleep.h"
 
 class WatchClass {
@@ -31,11 +30,11 @@ class WatchClass {
         MotorModule *motor;
         TouchModule *touch;
 
-        Print *debug;
-
         double loopsPerSecond = .0;
 
     private:
+        static constexpr const char *TAG = "WatchClass";
+
         bool _wifiState = true;
         bool _mqttState = true;
 

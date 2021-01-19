@@ -16,18 +16,19 @@ typedef std::function<void(char*, uint8_t*, unsigned int)> CallbackFn;
 
 class MqttModule : public Module {
     public:
-        Print *debug;
         MqttModule(WiFiModule *wifiModule, const char *clientId, const char *hostname, uint16_t port = DefaultMqttPort);
         MqttModule(WiFiModule *wifiModule, const char *clientId, const IPAddress ip, uint16_t port = DefaultMqttPort);
         void setup(void) override;
         void update(const unsigned long t) override;
-        void publish(const char *topic, const char *payload);
+        bool publish(const char *topic, const char *payload);
         void stayConnected(bool value);
         void connect();
         void disconnect();
         bool isConnected();
         void subscribe(const char *topic, CallbackFn callback);
     private:
+        static constexpr const char *TAG = "MqttModule";
+
         bool reconnect(void);
         bool resubscribe(void);
         void callback(char *topic, uint8_t *data, unsigned int length);
@@ -39,6 +40,7 @@ class MqttModule : public Module {
         uint16_t _port;
         bool _stayConnected = false;
         int _retryCount = 0;
+        unsigned long _nextUpdate = 0;
         unsigned long _nextRetry = 0;
         const char *_clientId;
         PubSubClient _client;

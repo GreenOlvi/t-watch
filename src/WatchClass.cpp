@@ -1,7 +1,5 @@
 #include "WatchClass.h"
 
-static const char *TAG = "WatchClass";
-
 WatchClass::WatchClass() {}
 
 void WatchClass::setup() {
@@ -10,18 +8,14 @@ void WatchClass::setup() {
 
     tft = ttgo->tft;
 
-    debug = new DebugWindow(40, 40);
-
     power = new PowerModule(ttgo->power);
     power->setup();
     power->onButtonShortPress([this]() { onButtonPress(); });
 
     wifi = new WiFiModule(HOSTNAME, STASSID, STAPSK);
-    wifi->debug = debug;
     wifi->setup();
 
     mqtt = new MqttModule(wifi, HOSTNAME, MQTT_HOST);
-    mqtt->debug = debug;
     mqtt->setup();
 
     motor = new MotorModule(MOTOR_PIN);
@@ -44,7 +38,7 @@ void WatchClass::setup() {
         auto s = new char[length + 1];
         memcpy(s, data, length);
         s[length] = 0;
-        ESP_LOGD(TAG, "Message on [%s] %s", topic, s);
+        ESP_LOGI(TAG, "Message on [%s] %s", topic, s);
     });
 
     ttgo->openBL();

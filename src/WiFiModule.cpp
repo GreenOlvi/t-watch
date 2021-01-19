@@ -20,7 +20,7 @@ void WiFiModule::connect() {
 }
 
 void WiFiModule::disconnect() {
-    debug->println("Disconnecting WiFi");
+    ESP_LOGI(TAG, "Disconnecting WiFi");
     _stayConnected = false;
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
@@ -60,9 +60,12 @@ void WiFiModule::onDisconnect(WiFiModuleEvent moduleEvent) {
 }
 
 void WiFiModule::update(const unsigned long t) {
-    if (_stayConnected && !isConnected() && t > _nextRetry)
-    {
-        reconnect();
+    if (t >= _nextUpdate) {
+        _nextUpdate = t + 100;
+        if (_stayConnected && !isConnected() && t > _nextRetry)
+        {
+            reconnect();
+        }
     }
 }
 
@@ -74,7 +77,7 @@ void WiFiModule::reconnect() {
     _retryCount++;
 
     if (_retryCount == 2) {
-        debug->println("WiFi not connected, restarting");
+        ESP_LOGW(TAG, "WiFi not connected, restarting");
         WiFi.disconnect();
         delay(10);
         begin();
@@ -82,19 +85,19 @@ void WiFiModule::reconnect() {
     }
 
     if (_retryCount == 3) {
-        debug->println("WiFi still not connected, stopping");
+        ESP_LOGE(TAG, "WiFi still not connected, stopping");
         disconnect();
     }
 }
 
 void WiFiModule::begin() {
-    debug->println("Connecting to WiFi");
+    ESP_LOGI(TAG, "Connecting to WiFi");
     WiFi.mode(WIFI_STA);
     WiFi.begin(_ssid, _password);
 }
 
 bool WiFiModule::resolveHostname(const char *hostname, IPAddress &result) {
-    debug->printf("Query A: %s.local\n", hostname);
+    ESP_LOGV(TAG, "Query A: %s.local", hostname);
 
     struct ip4_addr addr;
     addr.addr = 0;
@@ -103,15 +106,14 @@ bool WiFiModule::resolveHostname(const char *hostname, IPAddress &result) {
     if(err){
         if (err == ESP_ERR_NOT_FOUND)
         {
-            debug->println("Host was not found!");
+            ESP_LOGW(TAG, "Host was not found!");
             return false;
         }
-        debug->printf("Query Failed: %d\n", err);
+        ESP_LOGW(TAG, "Query Failed: %d", err);
         return false;
     }
 
-    debug->printf(IPSTR, IP2STR(&addr));
-    debug->println();
+    ESP_LOGI(TAG, "Resolved '%s.local' -> %d.%d.%d.%d", hostname, IP2STR(&addr));
     result = IPAddress(addr.addr);
     return true;
 }
@@ -119,23 +121,23 @@ bool WiFiModule::resolveHostname(const char *hostname, IPAddress &result) {
 bool WiFiModule::mdnsBegin() {
     esp_err_t err = mdns_init();
     if (err) {
-        debug->printf("MDNS Init failed: %d\n", err);
+        ESP_LOGW(TAG, "MDNS Init failed: %d", err);
         return false;
     }
 
     err = mdns_hostname_set(_hostname);
     if (err) {
-        debug->printf("MDNS hostname set failed: %d\n", err);
+        ESP_LOGW(TAG, "MDNS hostname set failed: %d", err);
         return false;
     }
 
     err = mdns_instance_name_set("T-Watch 2020");
     if (err) {
-        debug->printf("MDNS instance name set failed: %d\n", err);
+        ESP_LOGW(TAG, "MDNS instance name set failed: %d", err);
         return false;
     }
 
-    debug->println("MDNS started");
+    ESP_LOGD(TAG, "MDNS started");
 
     return true;
 }
