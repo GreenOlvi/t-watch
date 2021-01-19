@@ -40,8 +40,12 @@ TFT_eSprite* StatusBar::draw() {
     _buffer->setTextColor(TFT_GREEN);
     _buffer->drawString(buf, 30, 0, 1);
 
-    _buffer->setTextColor(TFT_GREEN);
-    sprintf(buf, "%.2fV", _watch->ttgo->power->getBattVoltage() / 1000.0);
+    if (_watch->power->isCharging()) {
+        _buffer->setTextColor(TFT_YELLOW);
+    } else {
+        _buffer->setTextColor(TFT_GREEN);
+    }
+    sprintf(buf, "%.2fV %d%%", _watch->power->getBatteryVoltage(), _watch->power->getBatteryPercentage());
     auto width = _buffer->textWidth(buf);
     _buffer->drawString(buf, TFT_WIDTH - width, 0, 1);
 

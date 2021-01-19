@@ -14,10 +14,15 @@ class PowerModule : public Module {
 
         void onButtonShortPress(PowerModuleEvent handler);
 
+        bool isCharging();
+        float getBatteryVoltage();
+        int getBatteryPercentage();
+
     private:
 
         AXP20X_Class *_power;
         bool _irq;
+        bool _isCharging;
 
         bool _hasOnButtonShortPress;
         PowerModuleEvent _onButtonShortPressHandler;
