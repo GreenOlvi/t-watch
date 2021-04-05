@@ -2,12 +2,10 @@
 #define _CONFIG_H 
 
 #define LILYGO_WATCH_2020_V1
-#include <Arduino.h>
 #include <LilyGoWatch.h>
 
-#define DEBUG
+#define HOSTNAME "twatch"
 
-#define HOSTNAME "t-watch"
 
 #define TZ "UTC"
 #define ntp0 "0.pool.ntp.org"

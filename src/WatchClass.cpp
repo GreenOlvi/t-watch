@@ -6,6 +6,8 @@ void WatchClass::setup() {
     ttgo = TTGOClass::getWatch();
     ttgo->begin();
 
+    setCpuFrequencyMhz(160);
+
     tft = ttgo->tft;
 
     power = new PowerModule(ttgo->power);
@@ -81,7 +83,7 @@ void WatchClass::lightSleep() {
 
     wifi->disconnect();
 
-    // setCpuFrequencyMhz(10);
+    setCpuFrequencyMhz(10);
     gpio_wakeup_enable((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
     esp_sleep_enable_gpio_wakeup();
     esp_light_sleep_start();
@@ -90,8 +92,8 @@ void WatchClass::lightSleep() {
 void WatchClass::wakeUp() {
     _isStandby = false;
 
+    setCpuFrequencyMhz(160);
     ESP_LOGI(TAG, "Waking up...");
-    // setCpuFrequencyMhz(160);
 
     ttgo->displayWakeup();
     ttgo->openBL();
